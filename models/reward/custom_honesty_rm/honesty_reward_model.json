@@ -1,0 +1,30 @@
+{
+  "config": {
+    "dataset_path": "data/processed/honesty_logs/grpo_ready.jsonl",
+    "output_dir": "models/reward/custom_honesty_rm",
+    "rubric_path": "docs/rlwhf-framework.md",
+    "smoothing_factor": 0.15,
+    "honesty_weight": 0.5,
+    "uncertainty_bonus": 0.35,
+    "disagreement_weight": 0.15,
+    "score_floor": -2.0,
+    "score_ceiling": 2.0,
+    "quantization": "qlora",
+    "history_window": 8,
+    "dtype": "bfloat16",
+    "hardware_target": "auto"
+  },
+  "statistics": {
+    "avg_reward": 0.0,
+    "honesty_ratio": 0.0,
+    "uncertainty_ratio": 0.0,
+    "hallucination_ratio": 0.0,
+    "samples": 0.0
+  },
+  "token_weights": {
+    "honesty": 0.5,
+    "uncertainty": 0.26249999999999996,
+    "hallucination": -0.5
+  },
+  "version": "0.1.0"
+}

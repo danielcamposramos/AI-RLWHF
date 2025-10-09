@@ -1,0 +1,80 @@
+{
+  "name": "Custom Honesty Reward Model",
+  "uniqueId": "custom-honesty-rm",
+  "description": "Computes ms-swift compatible honesty reward artifacts tuned for RLWHF tuples.",
+  "plugin-format": "python",
+  "type": "reward",
+  "version": "0.1.0",
+  "files": ["main.py", "setup.sh", "info.md"],
+  "setup-script": "setup.sh",
+  "parameters": {
+    "dataset_path": {
+      "title": "RLWHF Tuple Dataset",
+      "type": "string",
+      "default": "data/processed/honesty_logs/grpo_ready.jsonl"
+    },
+    "output_dir": {
+      "title": "Reward Artifact Directory",
+      "type": "string",
+      "default": "models/reward/custom_honesty_rm"
+    },
+    "rubric_path": {
+      "title": "Honesty Rubric Path",
+      "type": "string",
+      "default": "docs/rlwhf-framework.md"
+    },
+    "smoothing_factor": {
+      "title": "Smoothing Factor",
+      "type": "number",
+      "default": 0.15
+    },
+    "honesty_weight": {
+      "title": "Honesty Weight",
+      "type": "number",
+      "default": 0.5
+    },
+    "uncertainty_bonus": {
+      "title": "Uncertainty Bonus",
+      "type": "number",
+      "default": 0.35
+    },
+    "disagreement_weight": {
+      "title": "Disagreement Weight",
+      "type": "number",
+      "default": 0.15
+    },
+    "score_floor": {
+      "title": "Score Floor",
+      "type": "number",
+      "default": -2
+    },
+    "score_ceiling": {
+      "title": "Score Ceiling",
+      "type": "number",
+      "default": 2
+    },
+    "quantization": {
+      "title": "Quantization Strategy",
+      "type": "string",
+      "default": "qlora",
+      "enum": ["none", "qlora", "loraplus", "gptq", "awq"]
+    },
+    "history_window": {
+      "title": "History Window",
+      "type": "number",
+      "default": 8
+    },
+    "dtype": {
+      "title": "Preferred DType",
+      "type": "string",
+      "default": "bfloat16",
+      "enum": ["float32", "float16", "bfloat16"]
+    },
+    "hardware_target": {
+      "title": "Hardware Target",
+      "type": "string",
+      "default": "auto",
+      "enum": ["auto", "cpu", "cuda", "mps", "ascend"]
+    }
+  }
+}

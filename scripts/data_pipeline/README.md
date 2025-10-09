@@ -6,3 +6,6 @@ Batch and streaming ETL helpers for preparing raw corpora, generating synthetic 
 - Normalize teacher-student dialogue traces into JSONL/Parquet with schema `<prompt_id, model_role, text, reward, timestamp>`.
 - Export rubric definitions from `configs/prompts/rubrics.yml` so plugins share identical scoring metadata.
 - Stage honesty leaderboard aggregates for visualization notebooks inside `experiments/`.
+
+## New Utilities
+- `ms_swift_preprocess.py`: Streams JSONL or Hugging Face datasets into RLWHF honesty tuples while optionally invoking ms-swift's `EncodePreprocessor`. Generated files (default `data/processed/honesty_logs/grpo_ready.jsonl`) feed directly into the custom honesty reward plugin and GRPO wrappers.

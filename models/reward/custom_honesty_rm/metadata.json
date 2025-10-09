@@ -1,0 +1,6 @@
+{
+  "quantization": "qlora",
+  "dtype": "bfloat16",
+  "history_window": 8,
+  "hardware_target": "auto"
+}

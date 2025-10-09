@@ -1,0 +1,39 @@
+{
+  "hardware_profile": "single_gpu",
+  "env": {
+    "UNSLOTH_VLLM_STANDBY": "1",
+    "CUDA_LAUNCH_BLOCKING": "0",
+    "TOKENIZERS_PARALLELISM": "false"
+  },
+  "args": {
+    "train_type": "grpo",
+    "dataset_path": "data/processed/honesty_logs/grpo_ready.jsonl",
+    "reward_column": "reward",
+    "prompt_column": "prompt",
+    "response_column": "student_answer",
+    "critique_column": "teacher_feedback",
+    "max_rounds": 2,
+    "beta": 0.2,
+    "rollout_batch_size": 8,
+    "eval_batch_size": 8,
+    "gradient_accumulation_steps": 4,
+    "max_steps": 800,
+    "learning_rate": 0.0002,
+    "weight_decay": 0.01,
+    "warmup_ratio": 0.05,
+    "logging_steps": 10,
+    "save_steps": 50,
+    "gradient_checkpointing": true,
+    "reward_module": "plugins.core.custom_honesty_rm",
+    "hardware_profile": "single_gpu",
+    "hardware_engine": "deepspeed",
+    "hardware_dtype": "bfloat16",
+    "hardware_quantization": "qlora",
+    "hardware_deepspeed_config": "configs/training/deepspeed_zero2.json",
+    "hardware_gradient_checkpointing": true,
+    "hardware_tensor_parallel_size": 1,
+    "hardware_pipeline_parallel_size": 1,
+    "hardware_fsdp": false
+  },
+  "command": "python3 -m swift.llm.train.run_grpo --train-type grpo --dataset-path data/processed/honesty_logs/grpo_ready.jsonl --reward-column reward --prompt-column prompt --response-column student_answer --critique-column teacher_feedback --max-rounds 2 --beta 0.2 --rollout-batch-size 8 --eval-batch-size 8 --gradient-accumulation-steps 4 --max-steps 800 --learning-rate 0.0002 --weight-decay 0.01 --warmup-ratio 0.05 --logging-steps 10 --save-steps 50 --gradient-checkpointing true --reward-module plugins.core.custom_honesty_rm --hardware-profile single_gpu --hardware-engine deepspeed --hardware-dtype bfloat16 --hardware-quantization qlora --hardware-deepspeed-config configs/training/deepspeed_zero2.json --hardware-gradient-checkpointing true --hardware-tensor-parallel-size 1 --hardware-pipeline-parallel-size 1 --hardware-fsdp false"
+}

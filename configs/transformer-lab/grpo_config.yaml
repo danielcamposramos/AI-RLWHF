@@ -1,0 +1,124 @@
+metadata:
+  name: ms_swift_grpo
+  version: 0.1.0
+  owners:
+    - Daniel Ramos
+    - Multi-Vibe Coding In Chain
+  description: >
+    Baseline configuration that mirrors the ms-swift GRPO launcher (GRPO + custom
+    honesty reward model) while remaining transformer-lab friendly. The layout
+    references Unsloth Standby memory flags, honesty tuple pipelines, and the
+    hardware variance presets surfaced in AI-RLWHF.
+
+paths:
+  honesty_logs: data/processed/honesty_logs
+  reward_model_cache: models/reward/custom_honesty_rm
+  ms_swift_checkout: vendor/ms-swift-sub
+  dataset_manifest: configs/prompts/honesty/dataset_manifest.yaml
+  telemetry_output: experiments/telemetry
+
+pipeline:
+  preprocess_script: scripts/data_pipeline/ms_swift_preprocess.py
+  preprocess_args:
+    dataset_name: ai_rlwhf/honesty_logs
+    input_path: data/processed/honesty_logs/multi_teacher_aggregation.jsonl
+    output_path: data/processed/honesty_logs/grpo_ready.jsonl
+    streaming: true
+    max_samples: 5000
+  reward_plugin: plugins/core/custom_honesty_rm
+  reward_plugin_params:
+    score_floor: -2
+    score_ceiling: 2
+    smoothing_factor: 0.15
+    quantization: qlora
+  aggregator:
+    module: plugins/core/multi_teacher_aggregator
+    consensus: weighted_average
+    min_teacher_agreement: 0.55
+
+ms_swift:
+  trainer_entry: swift.llm.train.run_grpo
+  reward_module: plugins.core.custom_honesty_rm
+  grpo_args:
+    train_type: grpo
+    dataset_path: data/processed/honesty_logs/grpo_ready.jsonl
+    reward_column: reward
+    prompt_column: prompt
+    response_column: student_answer
+    critique_column: teacher_feedback
+    max_rounds: 2
+    beta: 0.2
+    rollout_batch_size: 8
+    eval_batch_size: 8
+    gradient_accumulation_steps: 4
+    max_steps: 800
+    learning_rate: 2.0e-4
+    weight_decay: 0.01
+    warmup_ratio: 0.05
+    logging_steps: 10
+    save_steps: 50
+    gradient_checkpointing: true
+  reward_args:
+    rubric_path: docs/rlwhf-framework.md
+    history_window: 10
+    honesty_weight: 0.5
+    uncertainty_bonus: 0.35
+  launch_env:
+    UNSLOTH_VLLM_STANDBY: "1"
+    CUDA_LAUNCH_BLOCKING: "0"
+    TOKENIZERS_PARALLELISM: "false"
+
+hardware_profiles:
+  cpu:
+    engine: vllm
+    dtype: bfloat16
+    max_context_tokens: 4096
+    quantization: qlora
+    torch_compile: false
+    pipeline_parallel_size: 1
+  mps:
+    engine: vllm
+    dtype: float16
+    quantization: gptq
+    gradient_checkpointing: true
+    compile_backend: mps
+  single_gpu:
+    engine: deepspeed
+    dtype: bfloat16
+    quantization: qlora
+    deepspeed_config: configs/training/deepspeed_zero2.json
+    gradient_checkpointing: true
+    tensor_parallel_size: 1
+    pipeline_parallel_size: 1
+    fsdp: false
+  multi_gpu:
+    engine: deepspeed
+    dtype: bfloat16
+    quantization: loraplus
+    deepspeed_config: configs/training/deepspeed_zero3.json
+    tensor_parallel_size: 2
+    pipeline_parallel_size: 2
+    sequence_parallel: true
+    gradient_checkpointing: true
+    fsdp: true
+  ascend_npu:
+    engine: megatron
+    dtype: float16
+    quantization: awq
+    tensor_parallel_size: 4
+    pipeline_parallel_size: 2
+    sequence_parallel: true
+    enable_graph_mode: true
+
+evaluation:
+  evalscope_profile: configs/transformer-lab/evalscope_ms_swift.yaml
+  target_metrics:
+    - honesty@2
+    - accuracy
+    - hallucination_guard
+  checkpoint_selector: best_accuracy
+
+notes:
+  - Ensure vendor/ms-swift-sub is kept up to date with `git submodule` or `git sparse-checkout`.
+  - Set `MS_SWIFT_CACHE` to reuse tokenizers and speed up rapid experiments.
+  - CPU/MPS templates rely on streaming datasets produced by `ms_swift_preprocess.py`.

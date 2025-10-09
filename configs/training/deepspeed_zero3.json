@@ -1,0 +1,26 @@
+{
+  "train_batch_size": 32,
+  "gradient_accumulation_steps": 4,
+  "fp16": {
+    "enabled": true,
+    "loss_scale_window": 250
+  },
+  "zero_optimization": {
+    "stage": 3,
+    "allgather_partitions": true,
+    "reduce_scatter": true,
+    "stage3_prefetch_bucket_size": 5e8,
+    "stage3_param_persistence_threshold": 1e5
+  },
+  "activation_checkpointing": {
+    "partition_activations": true,
+    "contiguous_memory_optimization": true,
+    "cpu_checkpointing": false
+  },
+  "aio": {
+    "block_size": 1048576,
+    "queue_depth": 32,
+    "single_submit": false,
+    "overlap_events": true
+  }
+}

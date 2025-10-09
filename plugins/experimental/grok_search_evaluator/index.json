@@ -72,6 +72,26 @@
       "title": "Max Context Tokens",
       "type": "number",
       "default": 4096
+    },
+    "enable_dpo_reward": {
+      "title": "Enable DPO Reward Boost",
+      "type": "boolean",
+      "default": false
+    },
+    "dpo_beta": {
+      "title": "DPO Beta",
+      "type": "number",
+      "default": 0.1
+    },
+    "preference_reference_field": {
+      "title": "Preference Reference Field",
+      "type": "string",
+      "default": "preferred_answer"
+    },
+    "reward_artifact_path": {
+      "title": "Reward Artifact Path",
+      "type": "string",
+      "default": "models/reward/custom_honesty_rm/honesty_reward_model.json"
     }
   },
   "parameters_ui": {
