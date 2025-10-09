@@ -7,5 +7,8 @@ Driver scripts to launch supervised pretraining, RLHF stages, and evaluation swe
 - `teacher_student_loop.py`: Coordinates Transformer Lab connectors, local Ollama inference, and reward aggregation using the rubric described in `docs/rlwhf-framework.md`.
 - `reward_dashboard_export.py`: Streams honesty tuples from `data/processed/honesty_logs` into analytics-friendly CSV/JSON for experimentation dashboards.
 
+## New Utilities
+- `master_rlwhf_launcher.py`: Full-cycle driver that runs quality gates and launches the adaptive ms-swift GRPO wrapper with one command.
+
 ## New Helpers
 - `unsloth_standby_runner.py`: Emits telemetry plus an ms-swift launch bundle at `workspace/plans/ms_swift_grpo_launch.json` so you can chain Standby warmups with GRPO runs built from `configs/transformer-lab/grpo_config.yaml`.

@@ -7,6 +7,13 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, Mapping, MutableMapping, Optional
 
+try:  # Prefer production wrapper when available
+    from plugins.core.grpo_production_wrapper import ProductionGRPOWrapper
+
+    __all__ = ["ProductionGRPOWrapper"]
+except Exception:  # pragma: no cover
+    ProductionGRPOWrapper = None  # type: ignore
+
 from plugins.core.custom_honesty_rm import collect_reward_config, custom_honesty_reward_entrypoint
 from scripts.utils.config_loader import load_config
 

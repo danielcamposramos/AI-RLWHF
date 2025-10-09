@@ -10,6 +10,7 @@ Centralized technical references, design logs, and collaboration briefs for AI-R
 - `rlwhf-framework.md`: Teacher-student reinforcement loop, scoring rubric, connectors, and memory-efficient RL guidance.
 - `grok-integration-plan.md`: Search-enhanced evaluator roadmap and Grok orchestration notes.
 - `ms-swift-integration.md`: Bridging plan for importing ms-swift GRPO/DPO tooling into AI-RLWHF pipelines with hardware-aware presets.
+- `INTEGRATION_CHECKLIST.md`: Step-by-step guide for validating the ms-swift bridge locally and in CI.
 - `prompt-for-grok.md`: Ready-to-send kickoff brief for Grok’s next contribution.
 - `pr-codex-ui-config.md`: Commit-ready summary for slot-aware toggles, Grok evaluator, and visualization upgrades.
 - `ollama-runtime.md`: Guidance for loading/unloading local Ollama models with context buffers.

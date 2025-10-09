@@ -18,3 +18,23 @@ This guide explains how the new AI-RLWHF helpers mirror ms-swift recipes for GRP
 5. Use `plugins/experimental/grok_search_evaluator` with `enable_dpo_reward=true` to derive DPO-informed rewards for evaluation or continued fine-tuning.
 
 These steps align Grok’s import plan with executable assets while remaining hardware agnostic.
+
+## Closure Enhancements
+- `plugins/core/grpo_production_wrapper.py`: Adaptive launcher with telemetry, reward shaping, and hardware-aware fallbacks.
+- `scripts/data_pipeline/data_quality_gate.py`: Gate RLWHF tuples prior to training.
+- `plugins/core/hardware_fallback_cascade.py` and `configs/training/hardware_fallback.json`: Shared presets for CPU, MPS, and Ascend-class devices.
+- `tests/integration/ms_swift_rlwhf_test.py`: Smoke-test covering tuple handling, production wrapper launch, and telemetry.
+- `scripts/training/master_rlwhf_launcher.py`: One-command entry point for end-to-end GRPO runs.
+- `.github/workflows/ms_swift_rlwhf_ci.yml`: Continuous integration harness for CPU/GPU smoke tests.
+- `docs/INTEGRATION_CHECKLIST.md`: Printable checklist for local and CI validation.
+
+## Continuous Integration
+The GitHub Actions workflow `ms_swift_rlwhf_ci.yml` executes the quality gate and integration suite on every pull request. GPU smoke tests fire on `main` to protect adaptive launch paths.
+
+### 5-second start
+```bash
+python scripts/setup/vendor_ms_swift.py
+python scripts/training/master_rlwhf_launcher.py launch \
+  --dataset_path data/test/honesty_logs_sample.jsonl \
+  --output_dir experiments/rlwhf_quickstart/
+```

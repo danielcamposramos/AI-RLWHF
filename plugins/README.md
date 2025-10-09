@@ -7,6 +7,7 @@ Source code for Transformer Lab plugins representing ingestion, generation, eval
 - `core/teacher`: Evaluator plugins leveraging the RLWHF rubric (-2 to +2) for honesty grading and reward emission.
 - `core/reward`: Aggregators that fuse multi-teacher outputs and publish JSONL tuples to `data/processed/honesty_logs`.
 - `core/reward-model`: Lightweight reward artifact builders such as `custom_honesty_rm`, compatible with ms-swift GRPO and Transformer Lab CLI jobs.
+- `core/hardware`: Adaptive launch helpers (`hardware_detector`, `hardware_fallback_cascade`, `grpo_production_wrapper`) that keep ms-swift launches portable across CPU, GPU, MPS, and Ascend-class devices.
 - `synthetic-builders`: Multi Vibe Coding In Chain prompt orchestrators for dataset expansion.
 - `experimental/`: Sandbox for novel connector experiments (for example `grok_search_evaluator`, internet/offline hybrids, and upcoming teacher variants).
 

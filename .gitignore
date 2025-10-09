@@ -46,6 +46,9 @@ configs/transformer-lab/cache/**
 configs/transformer-lab/.labsession
 !configs/README.md
 
+# Vendored dependencies
+vendor/ms-swift-sub/
+
 # Miscellaneous editor files
 .DS_Store
 .idea/

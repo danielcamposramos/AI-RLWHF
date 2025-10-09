@@ -1,0 +1,30 @@
+{
+  "cpu": {
+    "per_device_batch_size": 1,
+    "gradient_accumulation_steps": 16,
+    "quantization": "bitsandbytes_4bit",
+    "torch_dtype": "bfloat16",
+    "use_flash_attention": false
+  },
+  "mps": {
+    "per_device_batch_size": 2,
+    "gradient_accumulation_steps": 8,
+    "quantization": null,
+    "torch_dtype": "float16",
+    "use_flash_attention": false
+  },
+  "ascend_npu": {
+    "per_device_batch_size": 4,
+    "gradient_accumulation_steps": 4,
+    "quantization": "atol",
+    "torch_dtype": "float16",
+    "use_flash_attention": true
+  },
+  "gpu": {
+    "per_device_batch_size": 4,
+    "gradient_accumulation_steps": 4,
+    "quantization": "qlora",
+    "torch_dtype": "bfloat16",
+    "use_flash_attention": true
+  }
+}
