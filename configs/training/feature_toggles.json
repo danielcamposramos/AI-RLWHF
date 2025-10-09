@@ -7,13 +7,16 @@
   "offline_dataset_path": "data/examples/offline_reference.jsonl",
   "aggregation_method": "weighted_average",
   "disagreement_threshold": 1.5,
+  "teacher_prompt_path": "configs/prompts/teacher/system.md",
   "teacher_slots": [
     {
       "label": "grok-search-evaluator",
       "connection_type": "api",
       "api_profile": "transformerlab_default",
       "model_hint": "grok-4",
-      "weight": 0.4
+      "weight": 0.4,
+      "system_prompt_path": "configs/prompts/teacher/system.md",
+      "api_context_ratio": 0.66
     },
     {
       "label": "codex",
@@ -39,7 +42,8 @@
       "connection_type": "ollama",
       "ollama_endpoint": "http://localhost:11434",
       "model_hint": "qwen:latest",
-      "weight": 0.2
+      "weight": 0.2,
+      "ollama_context_ratio": 1.33
     }
   ]
 }

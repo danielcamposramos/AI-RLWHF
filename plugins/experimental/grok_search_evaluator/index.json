@@ -48,6 +48,11 @@
       "type": "string",
       "default": "data/examples/offline_reference.jsonl"
     },
+    "system_prompt_path": {
+      "title": "System Prompt Path",
+      "type": "string",
+      "default": "configs/prompts/teacher/system.md"
+    },
     "max_examples": {
       "title": "Max Examples",
       "type": "number",
@@ -57,6 +62,25 @@
       "title": "Fallback Score When Uncertain",
       "type": "number",
       "default": 0
+    },
+    "api_context_ratio": {
+      "title": "API Context Ratio",
+      "type": "number",
+      "default": 0.66
+    },
+    "max_context_tokens": {
+      "title": "Max Context Tokens",
+      "type": "number",
+      "default": 4096
+    }
+  },
+  "parameters_ui": {
+    "api_key_env": {
+      "ui:help": "Configure in Transformer Lab Settings → API Keys (Click Edit system prompt to customize).",
+      "ui:link": "transformerlab://settings/api-keys"
+    },
+    "system_prompt_path": {
+      "ui:help": "Defaults to configs/prompts/teacher/system.md; click Edit System Prompt in the UI to override per run."
     }
   }
 }

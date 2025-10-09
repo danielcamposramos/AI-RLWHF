@@ -18,11 +18,14 @@ def test_evaluator_offline(tmp_path, offline_reference_map):
         offline_reference_path=tmp_path / "offline.jsonl",
         use_internet=False,
         max_examples=10,
+        system_prompt_path=tmp_path / "teacher_prompt.md",
     )
     cfg.offline_reference_path.write_text(
         json.dumps({"prompt": sample["prompt"], "reference": "RLHF uses human feedback rewards."}) + "\n",
         encoding="utf-8",
     )
+    cfg.system_prompt_path.write_text("Return factual verification snippets only.", encoding="utf-8")
+    cfg.system_prompt = "Return factual verification snippets only."
     examples = load_examples(cfg.dataset_path, cfg.max_examples)
     records = evaluate_examples(examples, cfg)
     assert records

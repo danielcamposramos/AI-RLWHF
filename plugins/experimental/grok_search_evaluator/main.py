@@ -28,6 +28,7 @@ except Exception:  # pragma: no cover - fallback for local execution
     tlab_trainer = _DummyTrainer()  # type: ignore
 
 from scripts.utils.offline_scoring import load_offline_reference, score_against_reference
+from scripts.utils.prompt_loader import load_prompt
 from scripts.utils.search_cache import SearchCache
 
 DEFAULT_DATASET = Path("data/processed/student_answers.jsonl")
@@ -36,6 +37,7 @@ DEFAULT_CACHE = Path("data/processed/search_cache.jsonl")
 DEFAULT_OFFLINE = Path("data/examples/offline_reference.jsonl")
 DEFAULT_ENDPOINT = "https://api.x.ai/v1/chat/completions"
 DEFAULT_MODEL = "grok-4"
+DEFAULT_SYSTEM_PROMPT_PATH = Path("configs/prompts/teacher/system.md")
 
 
 @dataclass
@@ -48,8 +50,12 @@ class EvaluatorConfig:
     api_endpoint: str = DEFAULT_ENDPOINT
     api_key_env: str = "XAI_API_KEY"
     model: str = DEFAULT_MODEL
+    system_prompt: str = ""
+    system_prompt_path: Path = DEFAULT_SYSTEM_PROMPT_PATH
     max_examples: int = 100
     score_if_uncertain: int = 0
+    api_context_ratio: float = 0.66
+    max_context_tokens: int = 4096
 
     @property
     def api_key(self) -> Optional[str]:
@@ -82,10 +88,11 @@ def call_grok_search(prompt: str, config: EvaluatorConfig, cache: SearchCache) -
     payload = {
         "model": config.model,
         "messages": [
-            {"role": "system", "content": "Return factual snippets that verify or refute the claim."},
+            {"role": "system", "content": config.system_prompt or "Return factual snippets that verify or refute the claim."},
             {"role": "user", "content": prompt},
         ],
         "temperature": 0.2,
+        "max_tokens": max(32, int(config.max_context_tokens * config.api_context_ratio)),
     }
     if not config.use_internet or not config.api_key:
         result = {"source": "offline", "snippets": []}
@@ -176,6 +183,8 @@ def _collect_params(overrides: Optional[Mapping[str, Any]] = None) -> EvaluatorC
         params.update(getattr(tlab_trainer, "params"))
     if overrides:
         params.update(overrides)
+    system_prompt_path = Path(params.get("system_prompt_path", DEFAULT_SYSTEM_PROMPT_PATH))
+    system_prompt = load_prompt(system_prompt_path, fallback="Return factual snippets that verify or refute the claim.")
     return EvaluatorConfig(
         dataset_path=Path(params.get("dataset_path", DEFAULT_DATASET)),
         output_path=Path(params.get("output_path", DEFAULT_OUTPUT)),
@@ -185,8 +194,12 @@ def _collect_params(overrides: Optional[Mapping[str, Any]] = None) -> EvaluatorC
         api_endpoint=str(params.get("api_endpoint", DEFAULT_ENDPOINT)),
         api_key_env=str(params.get("api_key_env", "XAI_API_KEY")),
         model=str(params.get("model", DEFAULT_MODEL)),
+        system_prompt=system_prompt,
+        system_prompt_path=system_prompt_path,
         max_examples=int(params.get("max_examples", 100)),
         score_if_uncertain=int(params.get("score_if_uncertain", 0)),
+        api_context_ratio=float(params.get("api_context_ratio", 0.66)),
+        max_context_tokens=int(params.get("max_context_tokens", 4096)),
     )
 
 

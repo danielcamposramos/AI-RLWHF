@@ -32,6 +32,8 @@ Please skim the newest coordination docs:
 - [ ] **Slot UX validation**  
   – Review `plugins/core/multi-teacher-aggregator/index.json` in the Transformer Lab UI and confirm slot forms reveal: connection dropdown, API profile selector (with key button), Transformer Lab profile picker, and Ollama endpoint/model discovery when relevant.  
   – File follow-up notes (workspace/kimi-chain-scratchpad.md) if additional helper docs or templates are needed.
+- [ ] **Prompt preset QA**  
+  – Load and optionally edit the default prompts (`configs/prompts/dataset_generator/system.md`, `configs/prompts/teacher/system.md`, `configs/prompts/evaluator/system.md`) and capture suggested refinements for future presets.
 
 Feel free to suggest extra goals or refactors; everything is open for chain enhancement. When you publish your commit, drop the SHA in this chain so the next partner can continue.
 

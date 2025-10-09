@@ -31,6 +31,7 @@ def test_teacher_weighting_schemes(sample_teacher_feedback, temp_log):
     assert "aggregated_score" in result
     assert -2.0 <= result["aggregated_score"] <= 2.0
     assert temp_log.exists()
+    assert "teacher_slots" in result
 
 
 def test_confidence_weighting(sample_teacher_feedback, temp_log):
@@ -43,6 +44,7 @@ def test_confidence_weighting(sample_teacher_feedback, temp_log):
     assert isinstance(result["aggregated_score"], float)
     rows = [json.loads(line) for line in temp_log.read_text().splitlines() if line.strip()]
     assert rows[0]["config"]["teacher_mode"] == "multiple"
+    assert rows[0]["config"]["teacher_slots"]
 
 
 def test_memory_efficiency_metrics():
@@ -77,6 +79,7 @@ def test_performance_benchmarks(temp_log):
     elapsed = time.time() - start
     assert elapsed < 1.0
     assert "aggregated_score" in result
+    assert "teacher_slots" in result
 
 
 def test_log_schema(temp_log):
@@ -89,6 +92,7 @@ def test_log_schema(temp_log):
     assert payload["individual_scores"]["grok"] == 2.0
     rows = [json.loads(line) for line in temp_log.read_text().splitlines() if line.strip()]
     assert rows[0]["prompt"] == "What is RL?"
+    assert rows[0]["config"]["teacher_slots"]
 
 
 def test_error_handling_graceful(temp_log):
@@ -97,6 +101,7 @@ def test_error_handling_graceful(temp_log):
         log_path=temp_log,
     )
     assert result["aggregated_score"] == 0.0
+    assert "teacher_slots" in result
 
 
 def test_single_teacher_mode(sample_teacher_feedback, temp_log):
@@ -159,6 +164,7 @@ def test_runner_respects_internet_toggle(runner_config, offline_reference_map):
     )
     assert "grok-search-evaluator" in result["teacher_feedback"]
     assert result["aggregated_score"] <= 2
+    assert "teacher_slots" in result
     default_log = Path("data/processed/honesty_logs/multi_teacher_aggregation.jsonl")
     if default_log.exists():
         default_log.unlink()

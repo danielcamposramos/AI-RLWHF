@@ -106,5 +106,6 @@ A high resolution delivery plan lives in `docs/plan.md`. Highlights include:
 - `docs/data-strategy.md` - governance and acquisition plan.
 - `docs/evaluation-framework.md` - scoring and reporting structure.
 - `docs/rlwhf-framework.md` - teacher-student loop, memory guidance, and connector notes.
+- `docs/ollama-runtime.md` - tips for memory-safe Ollama orchestration.
 
 The current scaffold seeds the Multi Vibe Coding In Chain workflow so Codex, partner models, and human teammates can iterate rapidly while keeping honesty and feedback centered in every deliverable.

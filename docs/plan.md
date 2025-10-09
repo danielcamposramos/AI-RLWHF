@@ -47,3 +47,8 @@
 - Augmented training helpers, aggregators, and telemetry scripts to respect toggles without interrupting workflows when network access is disabled.
 - Seeded sample offline references (`data/examples/offline_reference.jsonl`) for baseline comparisons and automated offline scoring.
 - Delivered slot metadata (API/local/Ollama) so single-teacher and multi-teacher panels auto-expand with connection-aware selectors and API-key shortcuts.
+
+### Codex Search/Evaluator Pulse – 2025-10-09
+- Delivered `plugins/experimental/grok_search_evaluator` with search caching, offline fallback logic, and UI-editable system prompts.
+- Published canonical prompts for dataset generation, teacher evaluation, and post-run analytics (`configs/prompts/*/system.md`).
+- Extended dashboards with search-vs-static deltas and documented Ollama runtime procedures (`docs/ollama-runtime.md`).

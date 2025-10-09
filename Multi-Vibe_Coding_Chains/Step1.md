@@ -1745,3 +1745,5 @@ Debug + Tests:
 - Executed `pytest tests/test_multi_teacher_integration.py -q` (11 passed).
 Codex:
 Implemented the Grok search evaluator plugin, search-aware dashboards, and prompt presets so the swarm can operate both online and offline.
+Codex (slot upgrade):
+Created the Grok search evaluator plugin, refreshed the prompt presets, slot-aware multi-teacher controls, the Ollama runtime guide, and dashboard deltas so UI editing is seamless for dataset, teacher, and evaluator roles.
