@@ -7,3 +7,4 @@ Contains tracked experiment runs, hyperparameter sweeps, and reinforcement learn
 - Store reward distribution summaries (counts per -2…+2) alongside metrics for easy honesty trend analysis.
 - Reference `docs/rlwhf-framework.md` for required columns when logging teacher-student tuples.
 - Mirror search-enabled vs static runs by exporting the visualization bundle in `experiments/visualizations/` (see `search_delta.png` + `search_delta.md`).
+- Use `scripts/training/search_vs_static_runner.py` to generate paired JSON logs for online vs offline teacher passes.

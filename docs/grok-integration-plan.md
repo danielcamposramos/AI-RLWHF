@@ -37,7 +37,7 @@ Leverage Grok's real-time search and fact-checking abilities to create more robu
 7. **Dashboard/reporting:** Generate honesty trend dashboards contrasting search-enabled and offline evaluators.
 8. **UI toggle surfacing:** Mirror `feature_toggles.json` options in Transformer Lab parameters so evaluators run with or without internet automatically.
 9. **Teacher slot assists:** Provide slot-specific UI text for API key launchers, Transformer Lab profiles, and Ollama endpoints. When `connection_type` is `api`, the UI surfaces a button that lands on Transformer Lab key management; when `ollama`, the form collects `http://host:port` and fetches the latest model list on demand.
-10. **Dashboard deltas:** Visualization now includes the “Search vs Static Delta” pane; continue refining it with live Grok runs.
+10. **Dashboard deltas:** Visualization now includes the “Search vs Static Delta” pane; continue refining it with live Grok runs using `scripts/training/search_vs_static_runner.py` and `data/raw/live_bench_50.jsonl`.
 
 ## 4. Considerations
 - **API costs:** Grok search invocations incur usage fees—add caching to `data/processed/search_cache.jsonl`.

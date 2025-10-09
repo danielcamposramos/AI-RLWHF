@@ -11,6 +11,7 @@ from typing import Dict, Iterable, List, Mapping, MutableMapping, Optional
 from plugins.core.multi_teacher_aggregator import multi_teacher_aggregator
 from scripts.utils.config_loader import load_config
 from scripts.utils.offline_scoring import load_offline_reference, score_against_reference
+from scripts.utils.prompt_loader import load_prompt
 
 CONFIG_PATH = Path("configs/training/feature_toggles.json")
 ALLOWED_CONNECTIONS = {"api", "transformerlab_local", "ollama"}
@@ -26,6 +27,10 @@ class TeacherSlot:
     model_hint: str = ""
     weight: float = 0.25
     requires_internet: Optional[bool] = None
+    system_prompt_path: str = "configs/prompts/teacher/system.md"
+    api_context_ratio: float = 0.66
+    ollama_context_ratio: float = 1.33
+    local_context_ratio: float = 1.0
 
     def normalized_connection(self) -> str:
         kind = self.connection_type.strip().lower()
@@ -38,6 +43,13 @@ class TeacherSlot:
             return bool(self.requires_internet)
         return self.normalized_connection() == "api"
 
+    def context_ratio(self) -> float:
+        if self.normalized_connection() == "api":
+            return self.api_context_ratio
+        if self.normalized_connection() == "ollama":
+            return self.ollama_context_ratio
+        return self.local_context_ratio
+
     def as_dict(self) -> Dict[str, object]:
         return {
             "name": self.label,
@@ -48,6 +60,10 @@ class TeacherSlot:
             "model_hint": self.model_hint,
             "weight": self.weight,
             "requires_internet": self.internet_required(),
+            "system_prompt_path": self.system_prompt_path,
+            "api_context_ratio": self.api_context_ratio,
+            "ollama_context_ratio": self.ollama_context_ratio,
+            "local_context_ratio": self.local_context_ratio,
         }
 
 
@@ -62,6 +78,8 @@ class RunnerConfig:
     aggregation_method: str = "weighted_average"
     disagreement_threshold: float = 1.5
     teacher_slots: List[TeacherSlot] = field(default_factory=list)
+    teacher_prompt_path: Path = Path("configs/prompts/teacher/system.md")
+    teacher_prompt: str = ""
 
     @property
     def active_slots(self) -> List[TeacherSlot]:
@@ -80,9 +98,9 @@ class RunnerConfig:
 
 DEFAULT_SLOTS = [
     TeacherSlot(label="grok-search-evaluator", connection_type="api", api_profile="transformerlab_default", model_hint="grok-4", weight=0.4),
-    TeacherSlot(label="codex", connection_type="transformerlab_local", weight=0.2),
-    TeacherSlot(label="kimi", connection_type="transformerlab_local", weight=0.2),
-    TeacherSlot(label="glm", connection_type="transformerlab_local", weight=0.2),
+    TeacherSlot(label="codex", connection_type="transformerlab_local", transformerlab_profile="codex-default", weight=0.2),
+    TeacherSlot(label="kimi", connection_type="transformerlab_local", transformerlab_profile="kimi-local", weight=0.2),
+    TeacherSlot(label="glm", connection_type="transformerlab_local", transformerlab_profile="glm-local", weight=0.2),
 ]
 
 
@@ -109,6 +127,10 @@ def _coerce_slot(payload: Mapping[str, object]) -> TeacherSlot:
         model_hint=str(payload.get("model_hint", "")),
         weight=float(payload.get("weight", 0.25)),
         requires_internet=payload.get("requires_internet"),
+        system_prompt_path=str(payload.get("system_prompt_path", "configs/prompts/teacher/system.md")),
+        api_context_ratio=float(payload.get("api_context_ratio", 0.66)),
+        ollama_context_ratio=float(payload.get("ollama_context_ratio", 1.33)),
+        local_context_ratio=float(payload.get("local_context_ratio", 1.0)),
     )
 
 
@@ -127,6 +149,8 @@ def load_runner_config(path: Path | str = CONFIG_PATH) -> RunnerConfig:
     payload = load_config(path, defaults)
     slots_payload = payload.get("teacher_slots", [])
     teacher_slots = [_coerce_slot(item) for item in slots_payload if isinstance(item, Mapping)]
+    teacher_prompt_path = Path(payload.get("teacher_prompt_path", "configs/prompts/teacher/system.md"))
+    teacher_prompt = load_prompt(teacher_prompt_path, fallback="")
     config = RunnerConfig(
         teacher_mode=str(payload.get("teacher_mode", "multiple")).lower(),
         teacher_count=int(payload.get("teacher_count", 4)),
@@ -139,6 +163,8 @@ def load_runner_config(path: Path | str = CONFIG_PATH) -> RunnerConfig:
         aggregation_method=str(payload.get("aggregation_method", "weighted_average")),
         disagreement_threshold=float(payload.get("disagreement_threshold", 1.5)),
         teacher_slots=teacher_slots or list(DEFAULT_SLOTS),
+        teacher_prompt_path=teacher_prompt_path,
+        teacher_prompt=teacher_prompt,
     )
     return config
 
@@ -202,7 +228,13 @@ def run_multi_teacher_loop(prompt: str, student_answer: str, config: RunnerConfi
         score, feedback = _score_with_slot(prompt, student_answer, slot, config, offline_map)
         if config.fallback_mode == "skip_missing" and feedback.startswith("Skipped"):
             continue
-        teacher_feedback[slot.label] = {"score": score, "feedback": feedback}
+        teacher_feedback[slot.label] = {
+            "score": score,
+            "feedback": feedback,
+            "connection_type": slot.normalized_connection(),
+            "system_prompt_path": slot.system_prompt_path,
+            "context_ratio": slot.context_ratio(),
+        }
 
     aggregator_payload = multi_teacher_aggregator(
         teacher_feedback=teacher_feedback,

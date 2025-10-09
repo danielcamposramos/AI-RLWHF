@@ -79,6 +79,7 @@ A high resolution delivery plan lives in `docs/plan.md`. Highlights include:
 - Runner helpers (`scripts/training/multi_teacher_runner.py`, `scripts/training/unsloth_standby_runner.py`) honor the toggles and fall back to offline scoring when requested without interrupting plugin execution.
 - Single-teacher journeys collapse the UI to one slot, while multi-teacher journeys expose grouped slot forms (API/local/Ollama). Selecting `api` enables API profile + credentials (with a shortcut button to Transformer Lab key management), `transformerlab_local` keeps everything internal, and `ollama` prompts for an endpoint and lists available runtime models in real time.
 - The experimental `plugins/experimental/grok_search_evaluator` plugin consumes the same toggles, performs cached Grok searches when keys are present, and gracefully degrades to offline references when not.
+- Run `scripts/training/search_vs_static_runner.py` to populate `experiments/visualizations/search_delta/` with online vs offline comparisons using `data/raw/live_bench_50.jsonl`.
 
 ## Collaboration Workflow
 - Capture design discussions in `docs/` (blueprints, evaluation framework, data strategy).

@@ -12,4 +12,4 @@ Centralized technical references, design logs, and collaboration briefs for AI-R
 - `prompt-for-grok.md`: Ready-to-send kickoff brief for Grok’s next contribution.
 - `pr-codex-ui-config.md`: Commit-ready summary for slot-aware toggles, Grok evaluator, and visualization upgrades.
 - `ollama-runtime.md`: Guidance for loading/unloading local Ollama models with context buffers.
-- `pr-codex-ui-config.md`: Commit-ready summary for the configurable toggles and offline fallback rollout.
+- `live-bench.md`: Live benchmark workflow and search delta instructions.

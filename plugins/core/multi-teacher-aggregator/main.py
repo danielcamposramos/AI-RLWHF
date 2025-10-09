@@ -30,27 +30,47 @@ DEFAULT_THRESHOLD = 1.5
 DEFAULT_FALLBACK_MODE = "use_offline"
 DEFAULT_LOG_PATH = Path("data/processed/honesty_logs/multi_teacher_aggregation.jsonl")
 ALLOWED_CONNECTIONS = {"api", "transformerlab_local", "ollama"}
+DEFAULT_SYSTEM_PROMPT_PATH = "configs/prompts/teacher/system.md"
 DEFAULT_SLOT_CONFIGS = [
     {
         "name": "grok-search-evaluator",
         "connection_type": "api",
         "api_profile": "transformerlab_default",
         "model_hint": "grok-4",
+        "system_prompt_path": DEFAULT_SYSTEM_PROMPT_PATH,
+        "api_context_ratio": 0.66,
+        "ollama_context_ratio": 1.33,
+        "local_context_ratio": 1.0,
         "weight": 0.4,
     },
     {
         "name": "codex",
         "connection_type": "transformerlab_local",
+        "transformerlab_profile": "codex-default",
+        "system_prompt_path": DEFAULT_SYSTEM_PROMPT_PATH,
+        "api_context_ratio": 0.66,
+        "ollama_context_ratio": 1.33,
+        "local_context_ratio": 1.0,
         "weight": 0.2,
     },
     {
         "name": "kimi",
         "connection_type": "transformerlab_local",
+        "transformerlab_profile": "kimi-local",
+        "system_prompt_path": DEFAULT_SYSTEM_PROMPT_PATH,
+        "api_context_ratio": 0.66,
+        "ollama_context_ratio": 1.33,
+        "local_context_ratio": 1.0,
         "weight": 0.2,
     },
     {
         "name": "glm",
         "connection_type": "transformerlab_local",
+        "transformerlab_profile": "glm-local",
+        "system_prompt_path": DEFAULT_SYSTEM_PROMPT_PATH,
+        "api_context_ratio": 0.66,
+        "ollama_context_ratio": 1.33,
+        "local_context_ratio": 1.0,
         "weight": 0.2,
     },
 ]
@@ -67,10 +87,21 @@ class SlotConfig:
     ollama_endpoint: str = ""
     model_hint: str = ""
     weight: float = 0.25
+    system_prompt_path: str = DEFAULT_SYSTEM_PROMPT_PATH
+    api_context_ratio: float = 0.66
+    ollama_context_ratio: float = 1.33
+    local_context_ratio: float = 1.0
 
     @property
     def requires_internet(self) -> bool:
         return self.connection_type == "api"
+
+    def context_ratio(self) -> float:
+        if self.connection_type == "api":
+            return self.api_context_ratio
+        if self.connection_type == "ollama":
+            return self.ollama_context_ratio
+        return self.local_context_ratio
 
     def to_dict(self) -> Dict[str, object]:
         return {
@@ -82,6 +113,8 @@ class SlotConfig:
             "model_hint": self.model_hint,
             "weight": self.weight,
             "requires_internet": self.requires_internet,
+            "system_prompt_path": self.system_prompt_path,
+            "context_ratio": self.context_ratio(),
         }
 
 
@@ -117,6 +150,10 @@ def _extract_slot_configs(
                     "ollama_endpoint": slot_params.get(f"teacher_slot{idx}_ollama_endpoint", ""),
                     "model_hint": slot_params.get(f"teacher_slot{idx}_model_hint", ""),
                     "weight": slot_params.get(f"teacher_slot{idx}_weight", 0.25),
+                    "system_prompt_path": slot_params.get(f"teacher_slot{idx}_system_prompt_path", DEFAULT_SYSTEM_PROMPT_PATH),
+                    "api_context_ratio": slot_params.get(f"teacher_slot{idx}_api_context_ratio", 0.66),
+                    "ollama_context_ratio": slot_params.get(f"teacher_slot{idx}_ollama_context_ratio", 1.33),
+                    "local_context_ratio": slot_params.get(f"teacher_slot{idx}_local_context_ratio", 1.0),
                 }
             )
         iterable = dynamic_slots or DEFAULT_SLOT_CONFIGS
@@ -125,17 +162,21 @@ def _extract_slot_configs(
         name = str(slot_data.get("name", "")).strip()
         if not name:
             continue
-        slots.append(
-            SlotConfig(
-                name=name,
-                connection_type=_sanitize_connection(str(slot_data.get("connection_type", "transformerlab_local"))),
-                api_profile=str(slot_data.get("api_profile", "")),
-                transformerlab_profile=str(slot_data.get("transformerlab_profile", "")),
-                ollama_endpoint=str(slot_data.get("ollama_endpoint", "")),
-                model_hint=str(slot_data.get("model_hint", "")),
-                weight=float(slot_data.get("weight", 0.25)),
+            slots.append(
+                SlotConfig(
+                    name=name,
+                    connection_type=_sanitize_connection(str(slot_data.get("connection_type", "transformerlab_local"))),
+                    api_profile=str(slot_data.get("api_profile", "")),
+                    transformerlab_profile=str(slot_data.get("transformerlab_profile", "")),
+                    ollama_endpoint=str(slot_data.get("ollama_endpoint", "")),
+                    model_hint=str(slot_data.get("model_hint", "")),
+                    weight=float(slot_data.get("weight", 0.25)),
+                    system_prompt_path=str(slot_data.get("system_prompt_path", DEFAULT_SYSTEM_PROMPT_PATH)),
+                    api_context_ratio=float(slot_data.get("api_context_ratio", 0.66)),
+                    ollama_context_ratio=float(slot_data.get("ollama_context_ratio", 1.33)),
+                    local_context_ratio=float(slot_data.get("local_context_ratio", 1.0)),
+                )
             )
-        )
     if not slots:
         slots.append(SlotConfig(name="teacher"))
     return slots

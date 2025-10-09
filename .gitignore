@@ -18,6 +18,7 @@ node_modules/
 # Data artifacts generated during experimentation
 data/raw/**
 !data/raw/README.md
+!data/raw/live_bench_50.jsonl
 data/processed/**
 !data/processed/honesty_logs/
 !data/processed/README.md
