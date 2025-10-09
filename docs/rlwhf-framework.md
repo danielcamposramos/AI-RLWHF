@@ -22,7 +22,7 @@ Rubric configuration lives in `configs/prompts/rubrics.yml` (to be created later
 1. **Prompt Assembly:** Gather task prompt, dataset context, rubric hints, and persona instructions from `configs/prompts/`.
 2. **Student Generation:** Invoke Transformer Lab training hooks (`tlab_trainer.job_wrapper()` or pipeline wrappers) or local inference servers (Ollama, vLLM, TGI) via abstracted connectors.
 3. **Teacher Evaluation:** Teacher plugin ingests student output and rubric definitions, producing reward scalars and textual feedback.
-4. **Reward Logging:** Persist `(prompt, answer, critique, score)` into `data/processed/honesty_logs/` and stream summary metrics to `logs/training/`.
+4. **Reward Logging:** Persist `(prompt, answer, critique, score)` into `data/processed/honesty_logs/` and stream summary metrics to `logs/training/`. Toggle files (`configs/training/feature_toggles.json`) decide whether teachers rely on internet search, offline references, or blended scoring.
 5. **RL Update:** Reinforcement learner consumes logged tuples. Recommended baseline is GRPO with adapter-efficient fine-tuning (LoRA/QLoRA) depending on GPU budget.
 
 ## Transformer Lab Plugin Topology

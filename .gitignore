@@ -19,9 +19,13 @@ node_modules/
 data/raw/**
 !data/raw/README.md
 data/processed/**
+!data/processed/honesty_logs/
 !data/processed/README.md
+!data/processed/honesty_logs/README.md
 data/synthetic/**
 !data/synthetic/README.md
+!data/examples/
+!data/examples/**
 
 # Model outputs and intermediate checkpoints
 models/checkpoints/**
@@ -45,3 +49,6 @@ configs/transformer-lab/.labsession
 .DS_Store
 .idea/
 .vscode/
+
+# Chain telemetry streaming logs (keep directory, ignore streaming files)
+logs/chain-*.jsonl

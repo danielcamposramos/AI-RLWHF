@@ -1,0 +1,24 @@
+{
+  "gpu_memory_utilization": 0.95,
+  "max_seq_length": 8192,
+  "dtype": "bfloat16",
+  "use_gradient_checkpointing": true,
+  "optimizer": "adamw_8bit",
+  "learning_rate": 0.0002,
+  "warmup_steps": 10,
+  "max_steps": 100,
+  "logging_steps": 5,
+  "save_steps": 25,
+  "evaluation_strategy": "steps",
+  "models": {
+    "student": "unsloth/tinyllama",
+    "teacher_ensemble": [
+      "grok-search-evaluator",
+      "codex",
+      "kimi",
+      "glm",
+      "deepseek",
+      "qwen"
+    ]
+  }
+}

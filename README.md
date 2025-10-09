@@ -72,6 +72,12 @@ A high resolution delivery plan lives in `docs/plan.md`. Highlights include:
 - Standardize at least two generations per prompt during GRPO so reward normalization avoids divide-by-zero variance.
 - Track GPU telemetry and reward summaries inside `logs/training/` for regression spotting; integrate memory dashboards as plugins mature.
 
+## Configurable Feature Toggles
+- Adjust `configs/training/feature_toggles.json` to enable or disable internet-backed teachers, offline dataset validation, fallback modes, and weighted ensembles.
+- Transformer Lab parameters in `plugins/core/multi-teacher-aggregator/index.json` mirror these toggles so UI installs expose the same switches (e.g. `enable_internet_teachers`, `fallback_mode`).
+- Offline reference bundles (default `data/examples/offline_reference.jsonl`) keep evaluation flowing when network access is disabled or when comparisons against canonical documents are required.
+- Runner helpers (`scripts/training/multi_teacher_runner.py`, `scripts/training/unsloth_standby_runner.py`) honor the toggles and fall back to offline scoring when requested without interrupting plugin execution.
+
 ## Collaboration Workflow
 - Capture design discussions in `docs/` (blueprints, evaluation framework, data strategy).
 - Use `workspace/shared` for temporary exchanges between models or contributors.

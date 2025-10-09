@@ -1,0 +1,3 @@
+{"prompt": "What is reinforcement learning?", "reference": "Reinforcement learning is a feedback-driven training paradigm where agents learn policies by maximizing cumulative rewards through interaction."}
+{"prompt": "Explain RLHF.", "reference": "RLHF combines supervised fine-tuning with human preference reinforcement learning to align model responses with reviewer intent."}
+{"prompt": "List memory optimizations for transformers.", "reference": "Gradient checkpointing, parameter-efficient adapters, KV cache reuse, and Unsloth Standby reduce transformer memory needs."}

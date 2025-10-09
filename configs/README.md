@@ -5,4 +5,4 @@ Version controlled configuration bundles for Transformer Lab, data processing, e
 ## Highlights
 - `prompts/`: Teacher/student prompt packs and honesty rubrics.
 - `transformer-lab/`: Profiles for plugin installation, connector endpoints, and dataset registration.
-- `training/` (future): GRPO/Unsloth Standby hyperparameters shared across scripts and plugins.
+- `training/`: Feature toggles (`feature_toggles.json`, `unsloth_standby.json`) shared across scripts, plugins, and UI presets.

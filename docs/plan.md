@@ -19,6 +19,7 @@
 - Package reusable plugin templates within `plugins/templates`.
 - Provide quick start notebooks or scripts demonstrating plugin registration.
 - Implement teacher evaluator and reward aggregation plugins that can switch between Transformer Lab connectors, local Ollama endpoints, or remote inference APIs via configuration only.
+- Surface UI-exposed toggles (internet vs offline, fallback modes) within plugin manifests so partners can adjust behavior without editing code.
 
 ## Phase 3 - Training and RLHF Loop (Week 4-6)
 - Integrate reinforcement learning harness that loops through honesty feedback scoring.
@@ -33,3 +34,13 @@
 - Build reporting dashboards or markdown digests for stakeholders.
 - Document lessons learned and update roadmap for future expansion.
 - Publish a memory efficiency report contrasting Unsloth Standby, vanilla vLLM, and Transformer Lab native loops.
+
+### Kimi K2 Pulse – 2025-10-09
+- `docs/prompt-for-grok.md` captures the next Grok kickoff prompt with non-time-constrained goals.
+- `workspace/kimi-chain-scratchpad.md` introduces the emoji cue wall for async coordination.
+- `scripts/utils/chain_logger.py` enables lightweight JSONL partner telemetry (see `.gitignore` for streaming output hygiene).
+
+### Codex Configurable UI Pulse – 2025-10-09
+- Added `configs/training/feature_toggles.json` and matching plugin parameters so Transformer Lab installs expose internet/offline switches.
+- Augmented training helpers, aggregators, and telemetry scripts to respect toggles without interrupting workflows when network access is disabled.
+- Seeded sample offline references (`data/examples/offline_reference.jsonl`) for baseline comparisons and automated offline scoring.

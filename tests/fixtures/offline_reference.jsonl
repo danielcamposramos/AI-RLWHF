@@ -1,0 +1,2 @@
+{"prompt": "What is reinforcement learning?", "reference": "Reinforcement learning optimizes policy through reward feedback loops."}
+{"prompt": "Explain RLHF.", "reference": "RLHF uses human feedback rewards to refine models after supervised fine-tuning."}

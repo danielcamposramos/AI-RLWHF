@@ -1,0 +1,64 @@
+{
+  "name": "Multi-Teacher Reward Aggregator",
+  "uniqueId": "multi-teacher-aggregator",
+  "description": "Aggregates feedback from multiple teacher models with configurable weighting and fallback logic",
+  "plugin-format": "python",
+  "type": "aggregator",
+  "version": "0.2.0",
+  "files": ["main.py", "setup.sh"],
+  "setup-script": "setup.sh",
+  "parameters": {
+    "teacher_weights": {
+      "title": "Teacher Model Weights",
+      "type": "object",
+      "default": {
+        "grok-search-evaluator": 0.4,
+        "codex": 0.2,
+        "kimi": 0.2,
+        "glm": 0.2
+      }
+    },
+    "aggregation_method": {
+      "title": "Aggregation Method",
+      "type": "string",
+      "default": "weighted_average",
+      "enum": [
+        "weighted_average",
+        "majority_vote",
+        "confidence_weighted"
+      ]
+    },
+    "disagreement_threshold": {
+      "title": "Disagreement Threshold",
+      "type": "number",
+      "default": 1.5
+    },
+    "active_teachers": {
+      "title": "Active Teachers",
+      "type": "string",
+      "default": "grok-search-evaluator,codex,kimi,glm",
+      "description": "Comma-separated list of teachers to include after toggle filtering"
+    },
+    "enable_internet_teachers": {
+      "title": "Enable Internet Teachers",
+      "type": "boolean",
+      "default": true
+    },
+    "enable_offline_validation": {
+      "title": "Enable Offline Validation",
+      "type": "boolean",
+      "default": true
+    },
+    "offline_dataset_path": {
+      "title": "Offline Dataset Path",
+      "type": "string",
+      "default": "data/examples/offline_reference.jsonl"
+    },
+    "fallback_mode": {
+      "title": "Fallback Mode",
+      "type": "string",
+      "default": "use_offline",
+      "enum": ["use_offline", "skip_missing"]
+    }
+  }
+}
