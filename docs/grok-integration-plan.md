@@ -30,13 +30,14 @@ Leverage Grok's real-time search and fact-checking abilities to create more robu
 ## 3. Development Steps (Refined Goals)
 1. **Framework scaffolding (Codex):** Baseline RLWHF documentation and repo layout (complete).
 2. **Plugin scaffold (Grok):** Initial evaluator outline with rubric-aware scoring (complete).
-3. **Implement search evaluator (Qwen Max):** Full Grok search evaluator with rubric comparison logic.
+3. **Implement search evaluator (Qwen Max/Codex):** `plugins/experimental/grok_search_evaluator` now emits rubric-aware scores with cached Grok snippets and offline fallbacks.
 4. **Integrate evaluator into training loop:** Update orchestration scripts to load Grok context alongside other teachers.
 5. **Enhance honesty logs:** Persist search context and rubric decisions for reproducibility.
 6. **Document integration:** Keep `docs/plugin-blueprints.md` and `docs/rlwhf-framework.md` synchronized with evaluator improvements.
 7. **Dashboard/reporting:** Generate honesty trend dashboards contrasting search-enabled and offline evaluators.
-8. **UI toggle surfacing (new):** Mirror `feature_toggles.json` options in Transformer Lab parameters so evaluators run with or without internet automatically.
-9. **Teacher slot assists (new):** Provide slot-specific UI text for API key launchers, Transformer Lab profiles, and Ollama endpoints. When `connection_type` is `api`, the UI should surface a button that lands on Transformer Lab key management; when `ollama`, the form collects `http://host:port` and fetches the latest model list live (non cached).
+8. **UI toggle surfacing:** Mirror `feature_toggles.json` options in Transformer Lab parameters so evaluators run with or without internet automatically.
+9. **Teacher slot assists:** Provide slot-specific UI text for API key launchers, Transformer Lab profiles, and Ollama endpoints. When `connection_type` is `api`, the UI surfaces a button that lands on Transformer Lab key management; when `ollama`, the form collects `http://host:port` and fetches the latest model list on demand.
+10. **Dashboard deltas:** Visualization now includes the “Search vs Static Delta” pane; continue refining it with live Grok runs.
 
 ## 4. Considerations
 - **API costs:** Grok search invocations incur usage fees—add caching to `data/processed/search_cache.jsonl`.

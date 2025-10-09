@@ -219,6 +219,8 @@ class AggregationResult:
     combined_feedback: str
     individual_scores: ScoreDict
 
+    slots: Sequence[SlotConfig]
+
     def to_payload(self) -> Dict[str, object]:
         return {
             "aggregated_score": self.aggregated_score,
@@ -226,6 +228,7 @@ class AggregationResult:
             "high_disagreement": self.high_disagreement,
             "combined_feedback": self.combined_feedback,
             "individual_scores": self.individual_scores,
+            "teacher_slots": [slot.to_dict() for slot in self.slots],
         }
 
 
@@ -309,6 +312,7 @@ def aggregate_feedback(
         high_disagreement=high_disagreement,
         combined_feedback=feedback_text,
         individual_scores=scores,
+        slots=slots,
     )
 
 

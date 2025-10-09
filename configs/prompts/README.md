@@ -7,6 +7,8 @@ Reusable prompt and instruction templates supporting Multi Vibe Coding In Chain 
 - `student/`: Instruction packs, role/GUID priming, and curriculum tasks guiding the training target during RLWHF loops.
 - `rubrics.yml`: Shared reward scale (-2 to +2) with textual descriptions so plugins and scripts assign identical incentives.
 - `ensembles/`: Multi-model prompt cascades outlining how Codex, Grok, Qwen, and other collaborators exchange updates in chain-of-thought loops.
+- `dataset_generator/`: System prompts for synthesizing honesty datasets offline or via Multi-Vibe partners.
+- `evaluator/`: Meta-evaluator prompts for post-run analytics and dashboards.
 
 ## Usage Patterns
 - Loader utilities (to be added in `scripts/data_pipeline/prompts.py`) read this directory and expose prompts through a single API regardless of runtime (Transformer Lab SDK, direct REST, or Ollama).

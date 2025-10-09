@@ -41,8 +41,8 @@ AI-RLWHF/
 | --- | --- |
 | `configs/transformer-lab` | Define default workspace, dataset registry, and plugin wiring configs. |
 | `configs/prompts` | Maintain prompt archetypes for data synthesis and honesty scoring. |
-| `plugins/core` | Implement ingestion, synthetic builder, and feedback scorer plugins. |
-| `plugins/templates` | Provide scaffolds with logging, config parsing, and dataset emission utilities. |
+| `plugins/core` | Implement ingestion, synthetic builder, multi-teacher aggregator, and slot-aware feedback plugins. |
+| `plugins/experimental` | Iterate on optional teachers (for example, `grok_search_evaluator`) with internet/offline toggles. |
 | `scripts/data_pipeline` | Build ingestion, dedup, and normalization pipelines for raw datasets. |
 | `scripts/training` | Stage RLHF, adapter training, and evaluation launchers. |
 
@@ -78,6 +78,7 @@ A high resolution delivery plan lives in `docs/plan.md`. Highlights include:
 - Offline reference bundles (default `data/examples/offline_reference.jsonl`) keep evaluation flowing when network access is disabled or when comparisons against canonical documents are required.
 - Runner helpers (`scripts/training/multi_teacher_runner.py`, `scripts/training/unsloth_standby_runner.py`) honor the toggles and fall back to offline scoring when requested without interrupting plugin execution.
 - Single-teacher journeys collapse the UI to one slot, while multi-teacher journeys expose grouped slot forms (API/local/Ollama). Selecting `api` enables API profile + credentials (with a shortcut button to Transformer Lab key management), `transformerlab_local` keeps everything internal, and `ollama` prompts for an endpoint and lists available runtime models in real time.
+- The experimental `plugins/experimental/grok_search_evaluator` plugin consumes the same toggles, performs cached Grok searches when keys are present, and gracefully degrades to offline references when not.
 
 ## Collaboration Workflow
 - Capture design discussions in `docs/` (blueprints, evaluation framework, data strategy).

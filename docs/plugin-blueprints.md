@@ -31,6 +31,7 @@
 - Extends the baseline evaluator with Grok (or similar) live search capability per `docs/grok-integration-plan.md`.
 - Adds configurable query templates and retry logic so both Transformer Lab and local runner scripts reuse prompts consistently.
 - Outputs `(prompt, student_answer, search_context, teacher_feedback, reward)` tuples to support memory-efficient GRPO training and aggregated dashboards.
+- Ships as `plugins/experimental/grok_search_evaluator` with request caching, offline references, and Grok API-backed snippets.
 
 ### Multi-Teacher Reward Aggregator
 - Consumes individual teacher payloads (`score`, `feedback`) and produces consensus metrics (-2…+2) with disagreement analysis.

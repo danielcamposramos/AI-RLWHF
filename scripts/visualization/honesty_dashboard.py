@@ -18,6 +18,7 @@ except ImportError:  # pragma: no cover - gracefully degrade when libs missing
 DEFAULT_LOG = Path("data/processed/honesty_logs/multi_teacher_aggregation.jsonl")
 DEFAULT_LOG_DIR = DEFAULT_LOG.parent
 DEFAULT_OUTPUT = Path("experiments/visualizations")
+SEARCH_LOG = Path("data/processed/honesty_logs/grok_search_evaluator.jsonl")
 
 
 def _require_plotting() -> bool:
@@ -174,15 +175,54 @@ def generate_summary_report(df, output_dir: Path = DEFAULT_OUTPUT):
     summary_path.write_text("\n".join(lines), encoding="utf-8")
 
 
+def load_search_delta(log_path: Path = SEARCH_LOG):
+    if pd is None:
+        return None
+    if not log_path.exists():
+        return pd.DataFrame()
+    rows = []
+    with log_path.open("r", encoding="utf-8") as handle:
+        for line in handle:
+            line = line.strip()
+            if not line:
+                continue
+            rows.append(json.loads(line))
+    return pd.DataFrame(rows)
+
+
+def plot_search_delta(agg_df, search_df, output_dir: Path = DEFAULT_OUTPUT):
+    if not _require_plotting() or search_df is None or search_df.empty:
+        return
+    _ensure_output_dir(output_dir)
+    search_df = search_df.copy()
+    search_df["mode"] = search_df["search_source"].apply(lambda src: "search" if src and "api" in src else "static")
+    grouped = search_df.groupby("mode")["reward"].mean().reset_index()
+    plt.figure(figsize=(6, 4))
+    sns.barplot(data=grouped, x="mode", y="reward", palette="viridis")
+    plt.title("Average Reward: Search vs Static")
+    plt.ylabel("Average Reward")
+    plt.xlabel("Mode")
+    plt.tight_layout()
+    plt.savefig(output_dir / "search_delta.png")
+    plt.close()
+    table_path = output_dir / "search_delta.md"
+    lines = ["# Search vs Static Delta", "", "| Mode | Avg Reward |", "| --- | --- |"]
+    for _, row in grouped.iterrows():
+        lines.append(f"| {row['mode']} | {row['reward']:.2f} |")
+    table_path.write_text("\n".join(lines), encoding="utf-8")
+
+
 def create_dashboard(output_dir: Optional[Path] = None):
     """Generate dashboard assets if dependencies/data are available."""
     out_dir = Path(output_dir) if output_dir else DEFAULT_OUTPUT
     agg_df = load_aggregation_data()
     indiv_df = load_individual_logs()
+    search_df = load_search_delta()
     plot_score_distribution(agg_df, out_dir)
     plot_disagreement_over_time(agg_df, out_dir)
     plot_teacher_agreement(indiv_df, out_dir)
     plot_score_trends(agg_df, out_dir)
+    plot_search_delta(agg_df, search_df, out_dir)
     generate_summary_report(agg_df, out_dir)
     print(f"Dashboard artifacts (if any) saved under {out_dir}")
 

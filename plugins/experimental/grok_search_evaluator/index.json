@@ -1,0 +1,62 @@
+{
+  "name": "Grok Search Teacher Evaluator",
+  "uniqueId": "grok-search-evaluator",
+  "description": "Scores honesty using optional Grok search with offline fallbacks and caching",
+  "plugin-format": "python",
+  "type": "evaluator",
+  "version": "0.1.0",
+  "files": ["main.py", "setup.sh", "info.md"],
+  "setup-script": "setup.sh",
+  "parameters": {
+    "dataset_path": {
+      "title": "Dataset Path",
+      "type": "string",
+      "default": "data/processed/student_answers.jsonl"
+    },
+    "output_path": {
+      "title": "Output Log",
+      "type": "string",
+      "default": "data/processed/honesty_logs/grok_search_evaluator.jsonl"
+    },
+    "use_internet": {
+      "title": "Use Internet Search",
+      "type": "boolean",
+      "default": true
+    },
+    "api_endpoint": {
+      "title": "API Endpoint",
+      "type": "string",
+      "default": "https://api.x.ai/v1/chat/completions"
+    },
+    "api_key_env": {
+      "title": "API Key Env Var",
+      "type": "string",
+      "default": "XAI_API_KEY"
+    },
+    "model": {
+      "title": "Model Name",
+      "type": "string",
+      "default": "grok-4"
+    },
+    "cache_path": {
+      "title": "Search Cache",
+      "type": "string",
+      "default": "data/processed/search_cache.jsonl"
+    },
+    "offline_reference_path": {
+      "title": "Offline Reference",
+      "type": "string",
+      "default": "data/examples/offline_reference.jsonl"
+    },
+    "max_examples": {
+      "title": "Max Examples",
+      "type": "number",
+      "default": 100
+    },
+    "score_if_uncertain": {
+      "title": "Fallback Score When Uncertain",
+      "type": "number",
+      "default": 0
+    }
+  }
+}
