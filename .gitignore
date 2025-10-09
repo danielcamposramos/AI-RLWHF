@@ -1,0 +1,47 @@
+# AI-RLWHF ignore rules
+__pycache__/
+*.py[cod]
+*.swp
+*.swo
+*.tmp
+*.log
+*.bak
+*.cache/
+
+# Virtual environments and tooling
+.venv/
+.env
+.env.*
+.terraform/
+node_modules/
+
+# Data artifacts generated during experimentation
+data/raw/**
+!data/raw/README.md
+data/processed/**
+!data/processed/README.md
+data/synthetic/**
+!data/synthetic/README.md
+
+# Model outputs and intermediate checkpoints
+models/checkpoints/**
+models/exports/**
+!models/README.md
+
+# Logs and experiment outputs
+logs/**
+!logs/README.md
+experiments/runs/**
+!experiments/README.md
+workspace/shared/**
+!workspace/shared/README.md
+
+# Transformer Lab user state
+configs/transformer-lab/cache/**
+configs/transformer-lab/.labsession
+!configs/README.md
+
+# Miscellaneous editor files
+.DS_Store
+.idea/
+.vscode/
