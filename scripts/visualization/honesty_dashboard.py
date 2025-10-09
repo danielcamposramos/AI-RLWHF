@@ -22,6 +22,11 @@ SEARCH_LOG = Path("data/processed/honesty_logs/grok_search_evaluator.jsonl")
 
 
 def _require_plotting() -> bool:
+    """Checks if required plotting libraries are installed.
+
+    Returns:
+        True if pandas, matplotlib, and seaborn are available, False otherwise.
+    """
     if pd is None or plt is None or sns is None:
         print("pandas/matplotlib/seaborn not available; skipping visualization")
         return False
@@ -29,7 +34,15 @@ def _require_plotting() -> bool:
 
 
 def load_aggregation_data(log_file: Path = DEFAULT_LOG):
-    """Load aggregation JSONL into a DataFrame (empty when unavailable)."""
+    """Loads aggregation data from a JSONL log file into a pandas DataFrame.
+
+    Args:
+        log_file: The path to the aggregation log file.
+
+    Returns:
+        A pandas DataFrame containing the log data, or an empty DataFrame
+        if the file is not found. Returns None if pandas is not installed.
+    """
     if pd is None:
         return None
     records = []
@@ -45,7 +58,15 @@ def load_aggregation_data(log_file: Path = DEFAULT_LOG):
 
 
 def load_individual_logs(log_dir: Path = DEFAULT_LOG_DIR):
-    """Aggregate per-teacher JSONL logs into a DataFrame."""
+    """Aggregates individual teacher logs from a directory into a single DataFrame.
+
+    Args:
+        log_dir: The directory containing the individual teacher log files.
+
+    Returns:
+        A pandas DataFrame containing the combined log data, or None if
+        pandas is not installed.
+    """
     if pd is None:
         return None
     entries = []
@@ -64,11 +85,28 @@ def load_individual_logs(log_dir: Path = DEFAULT_LOG_DIR):
 
 
 def _ensure_output_dir(output_dir: Path) -> Path:
+    """Ensures that the output directory exists.
+
+    Args:
+        output_dir: The path to the output directory.
+
+    Returns:
+        The path to the output directory.
+    """
     output_dir.mkdir(parents=True, exist_ok=True)
     return output_dir
 
 
 def plot_score_distribution(df, output_dir: Path = DEFAULT_OUTPUT):
+    """Plots the distribution of scores.
+
+    This function can create a boxplot for individual teacher scores or a
+    histogram for aggregated scores.
+
+    Args:
+        df: DataFrame containing the score data.
+        output_dir: The directory to save the plot image.
+    """
     if not _require_plotting() or df is None or df.empty:
         return
     _ensure_output_dir(output_dir)
@@ -88,6 +126,12 @@ def plot_score_distribution(df, output_dir: Path = DEFAULT_OUTPUT):
 
 
 def plot_disagreement_over_time(df, output_dir: Path = DEFAULT_OUTPUT):
+    """Plots the teacher disagreement score over time.
+
+    Args:
+        df: DataFrame containing disagreement data with timestamps.
+        output_dir: The directory to save the plot image.
+    """
     if not _require_plotting() or df is None or df.empty or "disagreement" not in df.columns:
         return
     _ensure_output_dir(output_dir)
@@ -109,6 +153,12 @@ def plot_disagreement_over_time(df, output_dir: Path = DEFAULT_OUTPUT):
 
 
 def plot_teacher_agreement(df, output_dir: Path = DEFAULT_OUTPUT):
+    """Plots a heatmap of the correlation between teacher scores.
+
+    Args:
+        df: DataFrame containing individual teacher scores.
+        output_dir: The directory to save the plot image.
+    """
     if not _require_plotting() or df is None or df.empty or "teacher" not in df.columns:
         return
     _ensure_output_dir(output_dir)
@@ -123,6 +173,13 @@ def plot_teacher_agreement(df, output_dir: Path = DEFAULT_OUTPUT):
 
 
 def plot_score_trends(df, output_dir: Path = DEFAULT_OUTPUT, window: int = 10):
+    """Plots the rolling average of scores over time.
+
+    Args:
+        df: DataFrame containing score data.
+        output_dir: The directory to save the plot image.
+        window: The window size for the rolling average.
+    """
     if not _require_plotting() or df is None or df.empty:
         return
     _ensure_output_dir(output_dir)
@@ -151,6 +208,12 @@ def plot_score_trends(df, output_dir: Path = DEFAULT_OUTPUT, window: int = 10):
 
 
 def generate_summary_report(df, output_dir: Path = DEFAULT_OUTPUT):
+    """Generates a markdown summary report of honesty metrics.
+
+    Args:
+        df: DataFrame containing the data to summarize.
+        output_dir: The directory to save the markdown report.
+    """
     if df is None or df.empty:
         return
     _ensure_output_dir(output_dir)
@@ -176,6 +239,15 @@ def generate_summary_report(df, output_dir: Path = DEFAULT_OUTPUT):
 
 
 def load_search_delta(log_path: Path = SEARCH_LOG):
+    """Loads search evaluation data from a JSONL log file.
+
+    Args:
+        log_path: The path to the search evaluation log file.
+
+    Returns:
+        A pandas DataFrame containing the log data, or an empty DataFrame
+        if the file is not found. Returns None if pandas is not installed.
+    """
     if pd is None:
         return None
     if not log_path.exists():
@@ -191,6 +263,13 @@ def load_search_delta(log_path: Path = SEARCH_LOG):
 
 
 def plot_search_delta(agg_df, search_df, output_dir: Path = DEFAULT_OUTPUT):
+    """Plots and summarizes the difference between search and static evaluation.
+
+    Args:
+        agg_df: DataFrame with aggregated data (currently unused but kept for API consistency).
+        search_df: DataFrame with search evaluation data.
+        output_dir: The directory to save the plot and markdown table.
+    """
     if not _require_plotting() or search_df is None or search_df.empty:
         return
     _ensure_output_dir(output_dir)
@@ -213,7 +292,14 @@ def plot_search_delta(agg_df, search_df, output_dir: Path = DEFAULT_OUTPUT):
 
 
 def create_dashboard(output_dir: Optional[Path] = None):
-    """Generate dashboard assets if dependencies/data are available."""
+    """Generates all dashboard assets.
+
+    This function orchestrates the loading of data and the creation of all
+    plots and summary reports.
+
+    Args:
+        output_dir: The directory to save all dashboard assets.
+    """
     out_dir = Path(output_dir) if output_dir else DEFAULT_OUTPUT
     agg_df = load_aggregation_data()
     indiv_df = load_individual_logs()

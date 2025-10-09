@@ -42,6 +42,24 @@ DEFAULT_SYSTEM_PROMPT_PATH = Path("configs/prompts/teacher/system.md")
 
 @dataclass
 class EvaluatorConfig:
+    """Configuration for the Grok search evaluator.
+
+    Attributes:
+        dataset_path: Path to the input dataset of student answers.
+        output_path: Path to write the evaluation results.
+        cache_path: Path to the search cache.
+        offline_reference_path: Path to the offline reference data.
+        use_internet: Whether to use the internet for searches.
+        api_endpoint: The Grok API endpoint.
+        api_key_env: The environment variable for the API key.
+        model: The model to use for evaluation.
+        system_prompt: The system prompt to use for the model.
+        system_prompt_path: The path to the system prompt file.
+        max_examples: The maximum number of examples to evaluate.
+        score_if_uncertain: The score to assign if the result is uncertain.
+        api_context_ratio: The context ratio for API calls.
+        max_context_tokens: The maximum number of context tokens.
+    """
     dataset_path: Path = DEFAULT_DATASET
     output_path: Path = DEFAULT_OUTPUT
     cache_path: Path = DEFAULT_CACHE
@@ -59,10 +77,20 @@ class EvaluatorConfig:
 
     @property
     def api_key(self) -> Optional[str]:
+        """Retrieves the API key from the environment."""
         return os.environ.get(self.api_key_env)
 
 
 def load_examples(path: Path, limit: int) -> List[Dict[str, Any]]:
+    """Loads examples from a JSONL file.
+
+    Args:
+        path: The path to the JSONL file.
+        limit: The maximum number of examples to load.
+
+    Returns:
+        A list of dictionaries, where each dictionary represents an example.
+    """
     path = Path(path)
     if not path.exists():
         return []
@@ -81,6 +109,16 @@ def load_examples(path: Path, limit: int) -> List[Dict[str, Any]]:
 
 
 def call_grok_search(prompt: str, config: EvaluatorConfig, cache: SearchCache) -> Dict[str, Any]:
+    """Calls the Grok search API with caching.
+
+    Args:
+        prompt: The prompt to search for.
+        config: The evaluator configuration.
+        cache: The search cache.
+
+    Returns:
+        A dictionary containing the search result.
+    """
     cache_key = f"{config.model}:{prompt.strip()}"
     cached = cache.get(cache_key)
     if cached:
@@ -118,6 +156,18 @@ def call_grok_search(prompt: str, config: EvaluatorConfig, cache: SearchCache) -
 
 
 def derive_reward(prompt: str, student_answer: str, offline_map: Mapping[str, str], search_result: Dict[str, Any], fallback: int) -> Dict[str, Any]:
+    """Derives a reward score based on offline and online evaluation.
+
+    Args:
+        prompt: The original prompt.
+        student_answer: The student's answer.
+        offline_map: The offline reference data.
+        search_result: The result from the Grok search.
+        fallback: The score to assign in case of uncertainty.
+
+    Returns:
+        A dictionary containing the reward, feedback, and search context.
+    """
     score, feedback = score_against_reference(prompt, student_answer, offline_map)
     snippets = "\n".join(search_result.get("snippets", []))
     source = search_result.get("source", "offline")
@@ -140,6 +190,15 @@ def derive_reward(prompt: str, student_answer: str, offline_map: Mapping[str, st
 
 
 def evaluate_examples(examples: Iterable[Mapping[str, Any]], config: EvaluatorConfig) -> List[Dict[str, Any]]:
+    """Evaluates a collection of examples.
+
+    Args:
+        examples: An iterable of examples to evaluate.
+        config: The evaluator configuration.
+
+    Returns:
+        A list of dictionaries, where each dictionary contains the evaluation result.
+    """
     offline_map = load_offline_reference(config.offline_reference_path)
     cache = SearchCache(config.cache_path)
     results: List[Dict[str, Any]] = []
@@ -163,6 +222,12 @@ def evaluate_examples(examples: Iterable[Mapping[str, Any]], config: EvaluatorCo
 
 
 def write_results(records: Iterable[Mapping[str, Any]], path: Path) -> None:
+    """Writes evaluation results to a JSONL file.
+
+    Args:
+        records: An iterable of evaluation records.
+        path: The path to the output file.
+    """
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8") as handle:
@@ -171,6 +236,14 @@ def write_results(records: Iterable[Mapping[str, Any]], path: Path) -> None:
 
 
 def summarize(records: List[Mapping[str, Any]]) -> Dict[str, Any]:
+    """Summarizes the evaluation results.
+
+    Args:
+        records: A list of evaluation records.
+
+    Returns:
+        A dictionary containing a summary of the results.
+    """
     if not records:
         return {"processed": 0, "average_reward": 0}
     avg = sum(row.get("reward", 0) for row in records) / len(records)
@@ -178,6 +251,14 @@ def summarize(records: List[Mapping[str, Any]]) -> Dict[str, Any]:
 
 
 def _collect_params(overrides: Optional[Mapping[str, Any]] = None) -> EvaluatorConfig:
+    """Collects and validates parameters for the evaluator.
+
+    Args:
+        overrides: A mapping of parameter overrides.
+
+    Returns:
+        An EvaluatorConfig object.
+    """
     params = {}
     if getattr(tlab_trainer, "params", None):
         params.update(getattr(tlab_trainer, "params"))
@@ -205,6 +286,16 @@ def _collect_params(overrides: Optional[Mapping[str, Any]] = None) -> EvaluatorC
 
 @tlab_trainer.job_wrapper()
 def grok_search_evaluator(**overrides):
+    """Main entry point for the Grok search evaluator plugin.
+
+    This function is compatible with both Transformer Lab and direct invocation.
+
+    Args:
+        **overrides: A dictionary of parameter overrides.
+
+    Returns:
+        A dictionary summarizing the evaluation results.
+    """
     progress_cb = getattr(tlab_trainer, "progress_update", None)
     if callable(progress_cb):
         progress_cb(5)

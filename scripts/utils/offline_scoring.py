@@ -10,7 +10,20 @@ ReferenceMap = Dict[str, str]
 
 
 def load_offline_reference(path: Path) -> ReferenceMap:
-    """Load a JSONL or simple JSON mapping of prompt->reference answer."""
+    """Loads a mapping of prompts to reference answers from a file.
+
+    Supports both .jsonl files with 'prompt' and 'reference'/'answer' keys,
+    and standard .json dictionaries.
+
+    Args:
+        path: The path to the reference data file.
+
+    Returns:
+        A dictionary mapping prompt strings to reference answer strings.
+
+    Raises:
+        ValueError: If the file is a .json file but not a simple dictionary.
+    """
     path = Path(path)
     if not path.exists():
         return {}
@@ -34,6 +47,20 @@ def load_offline_reference(path: Path) -> ReferenceMap:
 
 
 def score_against_reference(prompt: str, student_answer: str, mapping: ReferenceMap) -> Tuple[float, str]:
+    """Scores a student's answer against a reference using sequence matching.
+
+    The score is calculated based on the similarity ratio between the student's
+    answer and the reference answer.
+
+    Args:
+        prompt: The prompt associated with the answer.
+        student_answer: The answer provided by the student.
+        mapping: A dictionary of prompt-to-reference-answer mappings.
+
+    Returns:
+        A tuple containing a float score between -2.0 and 2.0, and a
+        human-readable feedback string.
+    """
     reference = mapping.get(prompt)
     if not reference:
         return 0.0, "No offline reference available; neutral score applied."

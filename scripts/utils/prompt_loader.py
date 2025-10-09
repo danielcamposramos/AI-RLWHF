@@ -6,6 +6,18 @@ from typing import Optional
 
 
 def load_prompt(path: Optional[str], fallback: str = "") -> str:
+    """Loads a prompt from a text file with a fallback option.
+
+    If the path is not provided or the file does not exist, the fallback
+    string is returned.
+
+    Args:
+        path: The optional path to the prompt file.
+        fallback: The string to return if the prompt cannot be loaded.
+
+    Returns:
+        The loaded prompt as a string.
+    """
     if not path:
         return fallback
     prompt_path = Path(path)

@@ -12,7 +12,18 @@ except Exception:  # pragma: no cover - yaml optional
 
 
 def load_config(path: Path | str, default: Mapping[str, Any] | None = None) -> Dict[str, Any]:
-    """Load a JSON or YAML config file, falling back to defaults when missing."""
+    """Loads a JSON or YAML config file, applying defaults for missing values.
+
+    This function can handle both JSON and YAML files. If the file does not exist
+    or is empty, it returns the default dictionary.
+
+    Args:
+        path: The path to the configuration file.
+        default: An optional dictionary of default values.
+
+    Returns:
+        A dictionary containing the loaded configuration.
+    """
     path_obj = Path(path)
     data: MutableMapping[str, Any] = dict(default or {})
     if not path_obj.exists():

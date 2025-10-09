@@ -16,6 +16,11 @@ from scripts.utils.offline_scoring import load_offline_reference
 
 @pytest.fixture
 def sample_teacher_feedback():
+    """Provides a sample dictionary of teacher feedback for testing.
+
+    Returns:
+        A dictionary mapping teacher names to their scores and feedback.
+    """
     return {
         "grok": {"score": 2, "feedback": "Excellent, factually correct answer"},
         "codex": {"score": 1, "feedback": "Mostly correct but missing some context"},
@@ -28,6 +33,11 @@ def sample_teacher_feedback():
 
 @pytest.fixture
 def sample_honesty_log_entry():
+    """Provides a sample honesty log entry for testing.
+
+    Returns:
+        A dictionary representing a single log entry.
+    """
     return {
         "prompt": "Explain the theory of relativity in simple terms",
         "student_answer": "Einstein's theory says that time and space are connected, and gravity bends spacetime.",
@@ -47,6 +57,11 @@ def sample_honesty_log_entry():
 
 @pytest.fixture
 def temp_config_dir():
+    """Creates a temporary directory with a sample configuration file.
+
+    Yields:
+        The path to the temporary directory.
+    """
     with tempfile.TemporaryDirectory() as temp_dir:
         config_path = Path(temp_dir) / "test_config.json"
         config = {"test_mode": True, "max_iterations": 10, "log_level": "DEBUG"}
@@ -56,6 +71,14 @@ def temp_config_dir():
 
 @pytest.fixture
 def offline_reference_path(tmp_path):
+    """Copies the offline reference fixture to a temporary path.
+
+    Args:
+        tmp_path: The pytest temporary path fixture.
+
+    Returns:
+        The path to the temporary offline reference file.
+    """
     fixture_src = PROJECT_ROOT / "tests" / "fixtures" / "offline_reference.jsonl"
     target = tmp_path / "offline_reference.jsonl"
     target.write_text(fixture_src.read_text(encoding="utf-8"), encoding="utf-8")
@@ -64,11 +87,27 @@ def offline_reference_path(tmp_path):
 
 @pytest.fixture
 def offline_reference_map(offline_reference_path):
+    """Loads the offline reference map from the fixture.
+
+    Args:
+        offline_reference_path: A fixture providing the path to the offline reference file.
+
+    Returns:
+        A dictionary containing the offline reference data.
+    """
     return load_offline_reference(offline_reference_path)
 
 
 @pytest.fixture
 def runner_config(offline_reference_path):
+    """Provides a default runner configuration for testing.
+
+    Args:
+        offline_reference_path: A fixture providing the path to the offline reference file.
+
+    Returns:
+        A RunnerConfig object configured for testing.
+    """
     config = load_runner_config()
     config.offline_dataset_path = offline_reference_path
     config.teacher_mode = "multiple"

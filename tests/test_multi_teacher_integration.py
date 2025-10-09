@@ -18,6 +18,12 @@ def temp_log(tmp_path):
 
 
 def test_teacher_weighting_schemes(sample_teacher_feedback, temp_log):
+    """Tests the weighted average aggregation scheme.
+
+    Args:
+        sample_teacher_feedback: A fixture providing sample teacher feedback.
+        temp_log: A fixture for a temporary log file path.
+    """
     weights = {"grok": 0.33, "codex": 0.33, "kimi": 0.34}
     result = multi_teacher_aggregator(
         teacher_feedback=sample_teacher_feedback,
@@ -35,6 +41,12 @@ def test_teacher_weighting_schemes(sample_teacher_feedback, temp_log):
 
 
 def test_confidence_weighting(sample_teacher_feedback, temp_log):
+    """Tests the confidence weighted aggregation scheme.
+
+    Args:
+        sample_teacher_feedback: A fixture providing sample teacher feedback.
+        temp_log: A fixture for a temporary log file path.
+    """
     result = multi_teacher_aggregator(
         teacher_feedback=sample_teacher_feedback,
         aggregation_method="confidence_weighted",
@@ -48,6 +60,7 @@ def test_confidence_weighting(sample_teacher_feedback, temp_log):
 
 
 def test_memory_efficiency_metrics():
+    """Tests the memory monitoring functionality of the UnslothStandbyOptimizer."""
     optimizer = UnslothStandbyOptimizer()
     snapshot = optimizer.monitor_memory_usage()
     assert "cpu_memory_percent" in snapshot
@@ -56,6 +69,11 @@ def test_memory_efficiency_metrics():
 
 
 def test_generate_telemetry(tmp_path):
+    """Tests the generation of telemetry reports.
+
+    Args:
+        tmp_path: The pytest temporary path fixture.
+    """
     optimizer = UnslothStandbyOptimizer()
     optimizer.performance_metrics = {i: {"loss": 1.0 / (i + 1)} for i in range(5)}
     optimizer.memory_logs = [
@@ -68,6 +86,11 @@ def test_generate_telemetry(tmp_path):
 
 
 def test_performance_benchmarks(temp_log):
+    """Runs a simple performance benchmark on the aggregator.
+
+    Args:
+        temp_log: A fixture for a temporary log file path.
+    """
     test_feedback = {f"teacher_{i}": {"score": 1, "feedback": "ok"} for i in range(10)}
     start = time.time()
     result = multi_teacher_aggregator(
@@ -83,6 +106,11 @@ def test_performance_benchmarks(temp_log):
 
 
 def test_log_schema(temp_log):
+    """Tests that the output log schema is correct.
+
+    Args:
+        temp_log: A fixture for a temporary log file path.
+    """
     payload = multi_teacher_aggregator(
         teacher_feedback={"grok": {"score": 2, "feedback": "Accurate"}},
         log_path=temp_log,
@@ -96,6 +124,11 @@ def test_log_schema(temp_log):
 
 
 def test_error_handling_graceful(temp_log):
+    """Tests graceful error handling with invalid input.
+
+    Args:
+        temp_log: A fixture for a temporary log file path.
+    """
     result = multi_teacher_aggregator(
         teacher_feedback="invalid",  # type: ignore[arg-type]
         log_path=temp_log,
@@ -105,6 +138,12 @@ def test_error_handling_graceful(temp_log):
 
 
 def test_single_teacher_mode(sample_teacher_feedback, temp_log):
+    """Tests the aggregator in single teacher mode.
+
+    Args:
+        sample_teacher_feedback: A fixture providing sample teacher feedback.
+        temp_log: A fixture for a temporary log file path.
+    """
     single = {"grok": sample_teacher_feedback["grok"]}
     result = multi_teacher_aggregator(
         teacher_feedback=single,
@@ -119,6 +158,12 @@ def test_single_teacher_mode(sample_teacher_feedback, temp_log):
 
 
 def test_batch_runner(tmp_path, runner_config):
+    """Tests the batch evaluation runner.
+
+    Args:
+        tmp_path: The pytest temporary path fixture.
+        runner_config: A fixture providing a runner configuration.
+    """
     prompts = tmp_path / "prompts.txt"
     answers = tmp_path / "answers.txt"
     prompts.write_text("What is AI?\nExplain RLHF\n", encoding="utf-8")
@@ -133,6 +178,11 @@ def test_batch_runner(tmp_path, runner_config):
 
 
 def test_chain_logger(tmp_path):
+    """Tests the chain logger utility.
+
+    Args:
+        tmp_path: The pytest temporary path fixture.
+    """
     log_dir = tmp_path / "logs"
     os.environ["AI_RLWHF_LOG_DIR"] = str(log_dir)
     from scripts.utils.chain_logger import log
@@ -145,6 +195,11 @@ def test_chain_logger(tmp_path):
 
 
 def test_offline_scoring_against_reference(offline_reference_map):
+    """Tests the offline scoring utility against a reference map.
+
+    Args:
+        offline_reference_map: A fixture providing a sample offline reference map.
+    """
     prompt = "Explain RLHF."
     answer = "RLHF uses human feedback rewards to refine models after supervised fine tuning."
     score, feedback = score_against_reference(prompt, answer, offline_reference_map)
@@ -153,6 +208,12 @@ def test_offline_scoring_against_reference(offline_reference_map):
 
 
 def test_runner_respects_internet_toggle(runner_config, offline_reference_map):
+    """Tests that the runner correctly handles the internet toggle.
+
+    Args:
+        runner_config: A fixture providing a runner configuration.
+        offline_reference_map: A fixture providing a sample offline reference map.
+    """
     runner_config.enable_internet_teachers = False
     runner_config.teacher_mode = "multiple"
     runner_config.teacher_count = 2
@@ -171,6 +232,12 @@ def test_runner_respects_internet_toggle(runner_config, offline_reference_map):
 
 
 def test_single_teacher_runner_path(tmp_path, offline_reference_map):
+    """Tests the runner in single teacher mode.
+
+    Args:
+        tmp_path: The pytest temporary path fixture.
+        offline_reference_map: A fixture providing a sample offline reference map.
+    """
     config = load_runner_config()
     config.teacher_mode = "single"
     config.teacher_count = 1
