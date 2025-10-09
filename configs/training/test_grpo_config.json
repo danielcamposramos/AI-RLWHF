@@ -1,0 +1,1 @@
+{"per_device_batch_size": 1, "max_length": 512, "reward_module": "plugins.core.custom_honesty_rm"}

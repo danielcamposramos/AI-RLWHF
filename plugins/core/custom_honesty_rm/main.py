@@ -38,6 +38,23 @@ POSITIVE_TOKENS = {"accurate", "correct", "grounded", "verified", "substantiated
 
 @dataclass
 class RewardModelConfig:
+    """Configuration settings for the custom honesty reward model.
+
+    Attributes:
+        dataset_path: Path to the dataset for training the reward model.
+        output_dir: Directory to save the reward model artifact.
+        rubric_path: Path to the markdown file defining the scoring rubric.
+        smoothing_factor: A factor for smoothing reward scores.
+        honesty_weight: The weight applied to honesty signals.
+        uncertainty_bonus: A bonus applied for expressing uncertainty.
+        disagreement_weight: The weight applied for disagreement with references.
+        score_floor: The minimum possible reward score.
+        score_ceiling: The maximum possible reward score.
+        quantization: The quantization method to use (e.g., 'qlora').
+        history_window: The number of past interactions to consider.
+        dtype: The data type for model computations (e.g., 'bfloat16').
+        hardware_target: The target hardware for optimization ('auto', 'cpu', 'cuda').
+    """
     dataset_path: Path = Path("data/processed/honesty_logs/grpo_ready.jsonl")
     output_dir: Path = Path("models/reward/custom_honesty_rm")
     rubric_path: Path = Path("docs/rlwhf-framework.md")
@@ -55,12 +72,29 @@ class RewardModelConfig:
 
 @dataclass
 class HonestyRewardArtifact:
+    """Represents the output artifact of the honesty reward model training.
+
+    This dataclass holds the configuration, derived statistics, and token
+    weights that constitute the trained reward model. It can be serialized
+    to JSON for persistence.
+
+    Attributes:
+        config: The RewardModelConfig used to generate this artifact.
+        statistics: A mapping of derived statistics from the dataset.
+        token_weights: A mapping of token types to their reward weights.
+        version: The version of the artifact.
+    """
     config: RewardModelConfig
     statistics: Mapping[str, float]
     token_weights: Mapping[str, float]
     version: str = "0.1.0"
 
     def to_json(self) -> str:
+        """Serializes the artifact to a JSON string.
+
+        Returns:
+            A JSON string representation of the artifact.
+        """
         payload = {
             "config": _stringify_values(asdict(self.config)),
             "statistics": dict(self.statistics),
@@ -163,12 +197,35 @@ def _derive_token_weights(stats: Mapping[str, float], config: RewardModelConfig)
 
 
 class HonestyRewardModel:
-    """Heuristic reward scorer that emulates ms-swift reward adapters."""
+    """Heuristic reward scorer that emulates ms-swift reward adapters.
+
+    This model uses a pre-built artifact containing dataset statistics and
+    token weights to score a given response based on a simple heuristic
+    that rewards honesty and penalizes hallucinations.
+    """
 
     def __init__(self, artifact: HonestyRewardArtifact) -> None:
+        """Initializes the HonestyRewardModel.
+
+        Args:
+            artifact: The HonestyRewardArtifact containing the model's
+                configuration and learned weights.
+        """
         self.artifact = artifact
 
     def score(self, prompt: str, response: str, critique: str = "") -> Dict[str, float]:
+        """Scores a response based on the loaded reward model artifact.
+
+        Args:
+            prompt: The input prompt (currently unused, for future use).
+            response: The model's response to be scored.
+            critique: An optional critique or feedback text to be included
+                in the scoring.
+
+        Returns:
+            A dictionary containing the final scaled score, the normalized
+            score (0-1), and an uncertainty/entropy score.
+        """
         config = self.artifact.config
         weights = self.artifact.token_weights
         base_reward = self.artifact.statistics.get("avg_reward", 0.5)
@@ -192,6 +249,15 @@ class HonestyRewardModel:
         }
 
     def save(self, output_dir: Path) -> Path:
+        """Saves the reward model artifact to a file.
+
+        Args:
+            output_dir: The directory where the artifact file
+                `honesty_reward_model.json` will be saved.
+
+        Returns:
+            The path to the saved artifact file.
+        """
         output_dir.mkdir(parents=True, exist_ok=True)
         artifact_path = output_dir / "honesty_reward_model.json"
         artifact_path.write_text(self.artifact.to_json(), encoding="utf-8")
@@ -199,6 +265,17 @@ class HonestyRewardModel:
 
 
 def collect_reward_config(overrides: Optional[Mapping[str, Any]] = None) -> RewardModelConfig:
+    """Collects and merges configuration for the reward model.
+
+    It gathers configuration from Transformer Lab parameters (if available)
+    and merges them with any provided overrides.
+
+    Args:
+        overrides: A dictionary of configuration values to override the defaults.
+
+    Returns:
+        A fully populated RewardModelConfig instance.
+    """
     params: Dict[str, Any] = {}
     if getattr(tlab_trainer, "params", None):
         params.update(getattr(tlab_trainer, "params"))
@@ -225,6 +302,17 @@ def collect_reward_config(overrides: Optional[Mapping[str, Any]] = None) -> Rewa
 
 
 def build_reward_artifact(config: RewardModelConfig) -> HonestyRewardArtifact:
+    """Builds the honesty reward artifact from a configuration.
+
+    This function reads the dataset, aggregates statistics, derives token
+    weights, and packages everything into a HonestyRewardArtifact.
+
+    Args:
+        config: The RewardModelConfig to use for building the artifact.
+
+    Returns:
+        The generated HonestyRewardArtifact.
+    """
     samples = _read_jsonl(config.dataset_path)
     stats = _aggregate_statistics(samples, config)
     token_weights = _derive_token_weights(stats, config)
@@ -233,6 +321,20 @@ def build_reward_artifact(config: RewardModelConfig) -> HonestyRewardArtifact:
 
 
 def score_with_custom_rm(prompt: str, response: str, critique: str = "", artifact_path: Optional[Path] = None) -> Dict[str, float]:
+    """Scores a response using a custom reward model artifact.
+
+    This is a convenience function that loads a reward model artifact from a
+    file (or builds a default one) and uses it to score a response.
+
+    Args:
+        prompt: The input prompt.
+        response: The model's response.
+        critique: Optional critique text.
+        artifact_path: The optional path to the reward model artifact file.
+
+    Returns:
+        A dictionary containing the calculated scores.
+    """
     artifact = load_reward_artifact(artifact_path) if artifact_path else build_reward_artifact(RewardModelConfig())
     model = HonestyRewardModel(artifact)
     return model.score(prompt=prompt, response=response, critique=critique)
@@ -266,6 +368,18 @@ def _maybe_set_device(config: RewardModelConfig) -> None:
 
 @tlab_trainer.job_wrapper()
 def custom_honesty_reward_entrypoint(**overrides):
+    """The main entrypoint for the Transformer Lab plugin.
+
+    This function orchestrates the process of building and saving the honesty
+    reward model artifact. It is decorated to be compatible with the
+    Transformer Lab training environment, allowing it to report progress.
+
+    Args:
+        **overrides: A dictionary of parameters to override the default config.
+
+    Returns:
+        A dictionary containing the paths to the saved artifacts and statistics.
+    """
     progress_cb = getattr(tlab_trainer, "progress_update", None)
     if callable(progress_cb):
         progress_cb(5)
@@ -281,6 +395,17 @@ def custom_honesty_reward_entrypoint(**overrides):
 
 
 def load_reward_artifact(path: Path | None) -> HonestyRewardArtifact:
+    """Loads a reward model artifact from a JSON file.
+
+    Args:
+        path: The path to the `honesty_reward_model.json` file.
+
+    Returns:
+        A HonestyRewardArtifact instance populated with the data from the file.
+
+    Raises:
+        ValueError: If the path is not provided.
+    """
     if path is None:
         raise ValueError("Provide a path to an honesty reward artifact.")
     payload = json.loads(Path(path).read_text(encoding="utf-8"))

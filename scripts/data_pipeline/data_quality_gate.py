@@ -1,69 +1,73 @@
 #!/usr/bin/env python3
-"""Rule-based RLWHF tuple validator used before launching ms-swift GRPO."""
-from __future__ import annotations
+"""
+Validate / clean RLWHF tuples before they reach GRPO.
+Exit-0  →  dataset is good.
+Exit-1  →  issues found (details printed).
+"""
 
 import json
 import sys
-from collections import Counter
 from pathlib import Path
-from typing import Dict, Iterable
+from typing import List, Dict
 
-REQUIRED_FIELDS = {"prompt", "student_answer", "feedback", "reward", "metadata"}
-REQUIRED_METADATA_FIELDS = {"source_ai", "confidence_score", "rubric_dimension"}
-ALLOWED_REWARDS = {-2, -1, 0, 1, 2}
+REQ_FIELDS = {"prompt", "answer", "feedback", "reward", "metadata"}
+META_FIELDS = {"source_ai", "confidence_score", "rubric_dimension"}
 
 
-def _iter_jsonl(path: Path) -> Iterable[Dict[str, object]]:
-    with path.open("r", encoding="utf-8") as handle:
-        for line in handle:
-            line = line.strip()
-            if not line:
+def validate(path: str) -> bool:
+    good, bad = 0, 0
+    report: Dict[str, int] = {}
+
+    with open(path, encoding="utf-8") as f:
+        for line_no, line in enumerate(f, 1):
+            try:
+                obj = json.loads(line)
+            except json.JSONDecodeError:
+                bad += 1
+                report["json_error"] = report.get("json_error", 0) + 1
                 continue
-            yield json.loads(line)
 
+            missing = REQ_FIELDS - set(obj.keys())
+            if missing:
+                bad += 1
+                # Create a consistent key for reporting
+                key = f"missing_{sorted(list(missing))[0]}"
+                report[key] = report.get(key, 0) + 1
+                continue
 
-def validate(dataset_path: str) -> bool:
-    path = Path(dataset_path)
-    if not path.exists():
-        print(f"[quality_gate] Missing dataset: {path}")
-        return False
-    total = 0
-    error_counter: Counter[str] = Counter()
-    for payload in _iter_jsonl(path):
-        total += 1
-        missing = REQUIRED_FIELDS - payload.keys()
-        if missing:
-            error_counter.update(f"missing_field:{field}" for field in missing)
-            continue
-        metadata = payload.get("metadata")
-        if not isinstance(metadata, dict):
-            error_counter["metadata_not_object"] += 1
-            continue
-        missing_meta = REQUIRED_METADATA_FIELDS - metadata.keys()
-        if missing_meta:
-            error_counter.update(f"missing_metadata:{field}" for field in missing_meta)
-            continue
-        reward = payload.get("reward")
-        if reward not in ALLOWED_REWARDS:
-            error_counter["invalid_reward"] += 1
-    bad = sum(error_counter.values())
+            meta = obj.get("metadata", {})
+            missing_meta = META_FIELDS - set(meta.keys())
+            if missing_meta:
+                bad += 1
+                report["incomplete_metadata"] = report.get("incomplete_metadata", 0) + 1
+                continue
+
+            # reward must be in {-2,-1,0,1,2}
+            if obj.get("reward") not in {-2, -1, 0, 1, 2}:
+                bad += 1
+                report["invalid_reward"] = report.get("invalid_reward", 0) + 1
+                continue
+
+            good += 1
+
+    total = good + bad
     if total == 0:
-        print("[quality_gate] Empty dataset")
+        print("EMPTY dataset")
         return False
-    good = total - bad
-    print(f"[quality_gate] total={total} good={good} bad={bad}")
-    if error_counter:
-        print(f"[quality_gate] issues={dict(error_counter)}")
+
+    print(f"Quality report for {path}")
+    print(f"  Total samples : {total}")
+    print(f"  Good samples  : {good/total*100:.1f}% ({good})")
+    print(f"  Bad samples   : {bad/total*100:.1f}% ({bad})")
+    if report:
+        print("  Issues        :", json.dumps(report, indent=2))
+
     return bad == 0
 
 
-def main() -> int:
+if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print("Usage: data_quality_gate.py <dataset.jsonl>")
-        return 1
+        print("Usage: python data_quality_gate.py <path_to_jsonl_file>")
+        sys.exit(1)
     ok = validate(sys.argv[1])
-    return 0 if ok else 1
-
-
-if __name__ == "__main__":  # pragma: no cover
-    raise SystemExit(main())
+    sys.exit(0 if ok else 1)
