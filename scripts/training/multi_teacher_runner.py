@@ -169,16 +169,25 @@ def load_runner_config(path: Path | str = CONFIG_PATH) -> RunnerConfig:
     return config
 
 
-def _simulate_remote_score(prompt: str, student_answer: str) -> float:
+def _simulate_remote_score(prompt: str, student_answer: str, system_prompt: str) -> float:
     topical_bonus = 0.25 if any(token in prompt.lower() for token in ["latest", "today", "news", "update"]) else 0.0
     length_score = min(len(student_answer) / 500.0, 1.0) * 2 - 1
+    prompt_bonus = 0.0
+    if any(token in system_prompt.lower() for token in ["fact-check", "verify", "search"]):
+        prompt_bonus += 0.2
+    if any(token in system_prompt.lower() for token in ["creative", "brainstorm"]):
+        prompt_bonus -= 0.1
     jitter = random.uniform(-0.3, 0.3)
-    return max(-2.0, min(2.0, length_score + topical_bonus + jitter))
+    return max(-2.0, min(2.0, length_score + topical_bonus + prompt_bonus + jitter))
 
 
-def _simulate_local_score(student_answer: str, bias: float = 0.0) -> float:
+def _simulate_local_score(student_answer: str, system_prompt: str, bias: float = 0.0) -> float:
     base = min(len(student_answer) / 400.0, 1.0) * 2 - 1
-    return max(-2.0, min(2.0, base + bias))
+    prompt_bonus = 0.0
+    if any(token in system_prompt.lower() for token in ["concise", "brevity"]):
+        if len(student_answer) > 300:
+            prompt_bonus -= 0.5
+    return max(-2.0, min(2.0, base + bias + prompt_bonus))
 
 
 def _load_offline_map(config: RunnerConfig) -> Dict[str, str]:
@@ -196,6 +205,8 @@ def _score_offline(prompt: str, student_answer: str, offline_map: Mapping[str, s
 
 def _score_with_slot(prompt: str, student_answer: str, slot: TeacherSlot, config: RunnerConfig, offline_map: Mapping[str, str]) -> Tuple[float, str]:
     requires_internet = slot.internet_required()
+    system_prompt = load_prompt(slot.system_prompt_path, fallback=config.teacher_prompt)
+
     if requires_internet and not config.enable_internet_teachers:
         if config.enable_offline_validation and offline_map:
             return _score_offline(prompt, student_answer, offline_map, config.fallback_mode)
@@ -204,14 +215,14 @@ def _score_with_slot(prompt: str, student_answer: str, slot: TeacherSlot, config
         return 0.0, f"Internet disabled; {slot.label} produced neutral score."
 
     if slot.normalized_connection() == "api":
-        score = _simulate_remote_score(prompt, student_answer)
+        score = _simulate_remote_score(prompt, student_answer, system_prompt)
         feedback = f"API ({slot.api_profile or 'default'}) heuristic score."
     elif slot.normalized_connection() == "ollama":
-        score = _simulate_local_score(student_answer, bias=0.1)
+        score = _simulate_local_score(student_answer, system_prompt, bias=0.1)
         feedback = f"Ollama endpoint {slot.ollama_endpoint} heuristic score."
     else:
         bias = 0.05 if slot.model_hint.lower().startswith("glm") else 0.0
-        score = _simulate_local_score(student_answer, bias=bias)
+        score = _simulate_local_score(student_answer, system_prompt, bias=bias)
         feedback = f"Transformer Lab local profile {slot.transformerlab_profile or 'default'} score."
 
     if config.enable_offline_validation and offline_map:

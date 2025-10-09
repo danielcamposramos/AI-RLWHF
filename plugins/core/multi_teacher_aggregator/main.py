@@ -162,21 +162,21 @@ def _extract_slot_configs(
         name = str(slot_data.get("name", "")).strip()
         if not name:
             continue
-            slots.append(
-                SlotConfig(
-                    name=name,
-                    connection_type=_sanitize_connection(str(slot_data.get("connection_type", "transformerlab_local"))),
-                    api_profile=str(slot_data.get("api_profile", "")),
-                    transformerlab_profile=str(slot_data.get("transformerlab_profile", "")),
-                    ollama_endpoint=str(slot_data.get("ollama_endpoint", "")),
-                    model_hint=str(slot_data.get("model_hint", "")),
-                    weight=float(slot_data.get("weight", 0.25)),
-                    system_prompt_path=str(slot_data.get("system_prompt_path", DEFAULT_SYSTEM_PROMPT_PATH)),
-                    api_context_ratio=float(slot_data.get("api_context_ratio", 0.66)),
-                    ollama_context_ratio=float(slot_data.get("ollama_context_ratio", 1.33)),
-                    local_context_ratio=float(slot_data.get("local_context_ratio", 1.0)),
-                )
+        slots.append(
+            SlotConfig(
+                name=name,
+                connection_type=_sanitize_connection(str(slot_data.get("connection_type", "transformerlab_local"))),
+                api_profile=str(slot_data.get("api_profile", "")),
+                transformerlab_profile=str(slot_data.get("transformerlab_profile", "")),
+                ollama_endpoint=str(slot_data.get("ollama_endpoint", "")),
+                model_hint=str(slot_data.get("model_hint", "")),
+                weight=float(slot_data.get("weight", 0.25)),
+                system_prompt_path=str(slot_data.get("system_prompt_path", DEFAULT_SYSTEM_PROMPT_PATH)),
+                api_context_ratio=float(slot_data.get("api_context_ratio", 0.66)),
+                ollama_context_ratio=float(slot_data.get("ollama_context_ratio", 1.33)),
+                local_context_ratio=float(slot_data.get("local_context_ratio", 1.0)),
             )
+        )
     if not slots:
         slots.append(SlotConfig(name="teacher"))
     return slots
