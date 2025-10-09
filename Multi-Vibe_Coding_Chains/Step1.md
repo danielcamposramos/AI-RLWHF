@@ -1733,3 +1733,13 @@ Key updates:
 
 Debug + Tests:
 - Executed `pytest tests/test_multi_teacher_integration.py -q` (9 passed).
+Codex:
+Extended the aggregator and runner stack with single/multi teacher slot selectors so UI users can mix API, Transformer Lab local, or Ollama teachers dynamically.
+
+Key updates:
+- Revamped `plugins/core/multi-teacher-aggregator/` with slot-aware filtering, dynamic logging, and rich manifest parameters for connection types, API-key launchers, and offline fallbacks.
+- Enhanced runner utilities/configs (`scripts/training/multi_teacher_runner.py`, `configs/training/feature_toggles.json`) to parse teacher slots, respect mode/count toggles, and render either single or multi slot journeys (API/local/Ollama, offline reuse).
+- Added slot utilities, offline scoring helpers, and expanded docs/prompts so Transformer Lab UI exposes API key shortcuts, model listings, and offline overrides (`README.md`, `docs/plugin-blueprints.md`, `docs/prompt-for-grok.md`).
+
+Debug + Tests:
+- Executed `pytest tests/test_multi_teacher_integration.py -q` (11 passed).

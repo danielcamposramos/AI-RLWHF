@@ -74,9 +74,10 @@ A high resolution delivery plan lives in `docs/plan.md`. Highlights include:
 
 ## Configurable Feature Toggles
 - Adjust `configs/training/feature_toggles.json` to enable or disable internet-backed teachers, offline dataset validation, fallback modes, and weighted ensembles.
-- Transformer Lab parameters in `plugins/core/multi-teacher-aggregator/index.json` mirror these toggles so UI installs expose the same switches (e.g. `enable_internet_teachers`, `fallback_mode`).
+- Transformer Lab parameters in `plugins/core/multi-teacher-aggregator/index.json` mirror these toggles so UI installs expose the same switches (e.g. `teacher_mode`, `teacher_count`, `enable_internet_teachers`, `fallback_mode`).
 - Offline reference bundles (default `data/examples/offline_reference.jsonl`) keep evaluation flowing when network access is disabled or when comparisons against canonical documents are required.
 - Runner helpers (`scripts/training/multi_teacher_runner.py`, `scripts/training/unsloth_standby_runner.py`) honor the toggles and fall back to offline scoring when requested without interrupting plugin execution.
+- Single-teacher journeys collapse the UI to one slot, while multi-teacher journeys expose grouped slot forms (API/local/Ollama). Selecting `api` enables API profile + credentials (with a shortcut button to Transformer Lab key management), `transformerlab_local` keeps everything internal, and `ollama` prompts for an endpoint and lists available runtime models in real time.
 
 ## Collaboration Workflow
 - Capture design discussions in `docs/` (blueprints, evaluation framework, data strategy).

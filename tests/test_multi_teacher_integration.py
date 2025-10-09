@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 
 from plugins.core.multi_teacher_aggregator import multi_teacher_aggregator
-from scripts.training.multi_teacher_runner import run_batch_evaluation, run_multi_teacher_loop
+from scripts.training.multi_teacher_runner import load_runner_config, run_batch_evaluation, run_multi_teacher_loop
 from scripts.training.unsloth_standby_runner import UnslothStandbyOptimizer
 from scripts.utils.offline_scoring import score_against_reference
 
@@ -24,6 +24,9 @@ def test_teacher_weighting_schemes(sample_teacher_feedback, temp_log):
         teacher_weights=weights,
         aggregation_method="weighted_average",
         log_path=temp_log,
+        teacher_mode="multiple",
+        teacher_slots=[{"name": name} for name in sample_teacher_feedback.keys()],
+        teacher_count=3,
     )
     assert "aggregated_score" in result
     assert -2.0 <= result["aggregated_score"] <= 2.0
@@ -35,8 +38,11 @@ def test_confidence_weighting(sample_teacher_feedback, temp_log):
         teacher_feedback=sample_teacher_feedback,
         aggregation_method="confidence_weighted",
         log_path=temp_log,
+        teacher_slots=[{"name": "grok"}, {"name": "codex"}, {"name": "kimi"}],
     )
     assert isinstance(result["aggregated_score"], float)
+    rows = [json.loads(line) for line in temp_log.read_text().splitlines() if line.strip()]
+    assert rows[0]["config"]["teacher_mode"] == "multiple"
 
 
 def test_memory_efficiency_metrics():
@@ -66,6 +72,7 @@ def test_performance_benchmarks(temp_log):
         teacher_feedback=test_feedback,
         aggregation_method="weighted_average",
         log_path=temp_log,
+        teacher_slots=[{"name": f"teacher_{i}"} for i in range(10)],
     )
     elapsed = time.time() - start
     assert elapsed < 1.0
@@ -90,6 +97,20 @@ def test_error_handling_graceful(temp_log):
         log_path=temp_log,
     )
     assert result["aggregated_score"] == 0.0
+
+
+def test_single_teacher_mode(sample_teacher_feedback, temp_log):
+    single = {"grok": sample_teacher_feedback["grok"]}
+    result = multi_teacher_aggregator(
+        teacher_feedback=single,
+        teacher_mode="single",
+        teacher_count=1,
+        teacher_slots=[{"name": "grok", "connection_type": "api"}],
+        log_path=temp_log,
+    )
+    assert list(result["individual_scores"].keys()) == ["grok"]
+    rows = [json.loads(line) for line in temp_log.read_text().splitlines() if line.strip()]
+    assert rows[0]["config"]["teacher_slots"][0]["connection_type"] in {"api", "transformerlab_local", "ollama"}
 
 
 def test_batch_runner(tmp_path, runner_config):
@@ -128,6 +149,8 @@ def test_offline_scoring_against_reference(offline_reference_map):
 
 def test_runner_respects_internet_toggle(runner_config, offline_reference_map):
     runner_config.enable_internet_teachers = False
+    runner_config.teacher_mode = "multiple"
+    runner_config.teacher_count = 2
     result = run_multi_teacher_loop(
         "Explain RLHF.",
         "RLHF mixes rewards plus preference tuning.",
@@ -139,3 +162,13 @@ def test_runner_respects_internet_toggle(runner_config, offline_reference_map):
     default_log = Path("data/processed/honesty_logs/multi_teacher_aggregation.jsonl")
     if default_log.exists():
         default_log.unlink()
+
+
+def test_single_teacher_runner_path(tmp_path, offline_reference_map):
+    config = load_runner_config()
+    config.teacher_mode = "single"
+    config.teacher_count = 1
+    prompt = "What is reinforcement learning?"
+    student = "Reinforcement learning optimizes a policy based on rewards."
+    result = run_multi_teacher_loop(prompt, student, config, offline_reference_map)
+    assert len(result["teacher_feedback"]) == 1

@@ -12,6 +12,7 @@
 - Stand up Transformer Lab dataset plugins for corpus chunking, semantic search, and feedback capture.
 - Pilot synthetic data recipes using Multi Vibe model ensemble prompts.
 - Introduce teacher/student prompt registries in `configs/prompts/teacher` and `configs/prompts/student` for consistent rubric alignment.
+- Prototype slot-aware configuration defaults (`configs/training/feature_toggles.json`) so UI toggles for single vs multi teachers ship early.
 
 ## Phase 2 - Plugin Ecosystem (Week 2-4)
 - Deliver `plugins/core` adapters covering ingestion, augmentation, and labeling workflows.
@@ -19,6 +20,7 @@
 - Package reusable plugin templates within `plugins/templates`.
 - Provide quick start notebooks or scripts demonstrating plugin registration.
 - Implement teacher evaluator and reward aggregation plugins that can switch between Transformer Lab connectors, local Ollama endpoints, or remote inference APIs via configuration only.
+- Surface slot-driven UI selectors (connection type, API profile, Ollama endpoint) inside plugin manifests and ensure cached model listings are optional per toggle.
 - Surface UI-exposed toggles (internet vs offline, fallback modes) within plugin manifests so partners can adjust behavior without editing code.
 
 ## Phase 3 - Training and RLHF Loop (Week 4-6)
@@ -44,3 +46,4 @@
 - Added `configs/training/feature_toggles.json` and matching plugin parameters so Transformer Lab installs expose internet/offline switches.
 - Augmented training helpers, aggregators, and telemetry scripts to respect toggles without interrupting workflows when network access is disabled.
 - Seeded sample offline references (`data/examples/offline_reference.jsonl`) for baseline comparisons and automated offline scoring.
+- Delivered slot metadata (API/local/Ollama) so single-teacher and multi-teacher panels auto-expand with connection-aware selectors and API-key shortcuts.

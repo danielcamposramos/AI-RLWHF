@@ -25,6 +25,7 @@ Leverage Grok's real-time search and fact-checking abilities to create more robu
 
 ### 2.4 Multi-Teacher Integration
 - Outputs remain schema-compatible with the multi-teacher aggregator so Grok feedback blends with Codex, Kimi, GLM, DeepSeek, and Qwen signals.
+- UI toggles (`teacher_mode`, `teacher_count`, slot connection selectors) are shared between the aggregator manifest and the runner configuration so Grok can choose single-teacher (API or local) runs or arbitrarily many multi-teacher cascades.
 
 ## 3. Development Steps (Refined Goals)
 1. **Framework scaffolding (Codex):** Baseline RLWHF documentation and repo layout (complete).
@@ -35,6 +36,7 @@ Leverage Grok's real-time search and fact-checking abilities to create more robu
 6. **Document integration:** Keep `docs/plugin-blueprints.md` and `docs/rlwhf-framework.md` synchronized with evaluator improvements.
 7. **Dashboard/reporting:** Generate honesty trend dashboards contrasting search-enabled and offline evaluators.
 8. **UI toggle surfacing (new):** Mirror `feature_toggles.json` options in Transformer Lab parameters so evaluators run with or without internet automatically.
+9. **Teacher slot assists (new):** Provide slot-specific UI text for API key launchers, Transformer Lab profiles, and Ollama endpoints. When `connection_type` is `api`, the UI should surface a button that lands on Transformer Lab key management; when `ollama`, the form collects `http://host:port` and fetches the latest model list live (non cached).
 
 ## 4. Considerations
 - **API costs:** Grok search invocations incur usage fees—add caching to `data/processed/search_cache.jsonl`.

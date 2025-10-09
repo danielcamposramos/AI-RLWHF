@@ -1,43 +1,29 @@
 {
   "name": "Multi-Teacher Reward Aggregator",
   "uniqueId": "multi-teacher-aggregator",
-  "description": "Aggregates feedback from multiple teacher models with configurable weighting and fallback logic",
+  "description": "Aggregates feedback from flexible teacher slots with offline/online toggles",
   "plugin-format": "python",
   "type": "aggregator",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "files": ["main.py", "setup.sh"],
   "setup-script": "setup.sh",
   "parameters": {
-    "teacher_weights": {
-      "title": "Teacher Model Weights",
-      "type": "object",
-      "default": {
-        "grok-search-evaluator": 0.4,
-        "codex": 0.2,
-        "kimi": 0.2,
-        "glm": 0.2
-      }
-    },
-    "aggregation_method": {
-      "title": "Aggregation Method",
+    "teacher_mode": {
+      "title": "Teacher Mode",
       "type": "string",
-      "default": "weighted_average",
-      "enum": [
-        "weighted_average",
-        "majority_vote",
-        "confidence_weighted"
-      ]
+      "default": "multiple",
+      "enum": ["single", "multiple"]
     },
-    "disagreement_threshold": {
-      "title": "Disagreement Threshold",
+    "teacher_count": {
+      "title": "Teacher Count",
       "type": "number",
-      "default": 1.5
+      "default": 4
     },
     "active_teachers": {
-      "title": "Active Teachers",
+      "title": "Active Teachers Override",
       "type": "string",
-      "default": "grok-search-evaluator,codex,kimi,glm",
-      "description": "Comma-separated list of teachers to include after toggle filtering"
+      "default": "",
+      "description": "Comma-separated teacher names when overriding slot definitions"
     },
     "enable_internet_teachers": {
       "title": "Enable Internet Teachers",
@@ -49,16 +35,163 @@
       "type": "boolean",
       "default": true
     },
-    "offline_dataset_path": {
-      "title": "Offline Dataset Path",
-      "type": "string",
-      "default": "data/examples/offline_reference.jsonl"
-    },
     "fallback_mode": {
       "title": "Fallback Mode",
       "type": "string",
       "default": "use_offline",
       "enum": ["use_offline", "skip_missing"]
+    },
+    "offline_dataset_path": {
+      "title": "Offline Dataset Path",
+      "type": "string",
+      "default": "data/examples/offline_reference.jsonl"
+    },
+    "teacher_slot1_label": {
+      "title": "Teacher Slot 1 Label",
+      "type": "string",
+      "default": "grok-search-evaluator"
+    },
+    "teacher_slot1_connection_type": {
+      "title": "Slot 1 Connection",
+      "type": "string",
+      "default": "api",
+      "enum": ["api", "transformerlab_local", "ollama"]
+    },
+    "teacher_slot1_api_profile": {
+      "title": "Slot 1 API Profile",
+      "type": "string",
+      "default": "transformerlab_default"
+    },
+    "teacher_slot1_transformerlab_profile": {
+      "title": "Slot 1 Transformer Lab Profile",
+      "type": "string",
+      "default": ""
+    },
+    "teacher_slot1_ollama_endpoint": {
+      "title": "Slot 1 Ollama Endpoint",
+      "type": "string",
+      "default": "http://localhost:11434"
+    },
+    "teacher_slot1_model_hint": {
+      "title": "Slot 1 Model Hint",
+      "type": "string",
+      "default": "grok-4"
+    },
+    "teacher_slot1_weight": {
+      "title": "Slot 1 Weight",
+      "type": "number",
+      "default": 0.4
+    },
+    "teacher_slot2_label": {
+      "title": "Teacher Slot 2 Label",
+      "type": "string",
+      "default": "codex"
+    },
+    "teacher_slot2_connection_type": {
+      "title": "Slot 2 Connection",
+      "type": "string",
+      "default": "transformerlab_local",
+      "enum": ["api", "transformerlab_local", "ollama"]
+    },
+    "teacher_slot2_transformerlab_profile": {
+      "title": "Slot 2 Transformer Lab Profile",
+      "type": "string",
+      "default": ""
+    },
+    "teacher_slot2_model_hint": {
+      "title": "Slot 2 Model Hint",
+      "type": "string",
+      "default": "codex"
+    },
+    "teacher_slot2_weight": {
+      "title": "Slot 2 Weight",
+      "type": "number",
+      "default": 0.2
+    },
+    "teacher_slot3_label": {
+      "title": "Teacher Slot 3 Label",
+      "type": "string",
+      "default": "kimi"
+    },
+    "teacher_slot3_connection_type": {
+      "title": "Slot 3 Connection",
+      "type": "string",
+      "default": "transformerlab_local",
+      "enum": ["api", "transformerlab_local", "ollama"]
+    },
+    "teacher_slot3_model_hint": {
+      "title": "Slot 3 Model Hint",
+      "type": "string",
+      "default": "kimi"
+    },
+    "teacher_slot3_weight": {
+      "title": "Slot 3 Weight",
+      "type": "number",
+      "default": 0.2
+    },
+    "teacher_slot4_label": {
+      "title": "Teacher Slot 4 Label",
+      "type": "string",
+      "default": "glm"
+    },
+    "teacher_slot4_connection_type": {
+      "title": "Slot 4 Connection",
+      "type": "string",
+      "default": "transformerlab_local",
+      "enum": ["api", "transformerlab_local", "ollama"]
+    },
+    "teacher_slot4_model_hint": {
+      "title": "Slot 4 Model Hint",
+      "type": "string",
+      "default": "glm"
+    },
+    "teacher_slot4_weight": {
+      "title": "Slot 4 Weight",
+      "type": "number",
+      "default": 0.2
+    },
+    "teacher_slot5_label": {
+      "title": "Teacher Slot 5 Label",
+      "type": "string",
+      "default": "deepseek"
+    },
+    "teacher_slot5_connection_type": {
+      "title": "Slot 5 Connection",
+      "type": "string",
+      "default": "api",
+      "enum": ["api", "transformerlab_local", "ollama"]
+    },
+    "teacher_slot5_weight": {
+      "title": "Slot 5 Weight",
+      "type": "number",
+      "default": 0.2
+    },
+    "teacher_slot6_label": {
+      "title": "Teacher Slot 6 Label",
+      "type": "string",
+      "default": "qwen"
+    },
+    "teacher_slot6_connection_type": {
+      "title": "Slot 6 Connection",
+      "type": "string",
+      "default": "api",
+      "enum": ["api", "transformerlab_local", "ollama"]
+    },
+    "teacher_slot6_weight": {
+      "title": "Slot 6 Weight",
+      "type": "number",
+      "default": 0.2
+    },
+    "aggregation_method": {
+      "title": "Aggregation Method",
+      "type": "string",
+      "default": "weighted_average",
+      "enum": ["weighted_average", "majority_vote", "confidence_weighted"]
+    },
+    "disagreement_threshold": {
+      "title": "Disagreement Threshold",
+      "type": "number",
+      "default": 1.5
     }
   }
 }

@@ -1,4 +1,4 @@
-"""Configurable multi-teacher evaluation runner with offline/internet toggles."""
+"""Configurable multi-teacher evaluation runner with API/local slot toggles."""
 from __future__ import annotations
 
 import argparse
@@ -13,74 +13,123 @@ from scripts.utils.config_loader import load_config
 from scripts.utils.offline_scoring import load_offline_reference, score_against_reference
 
 CONFIG_PATH = Path("configs/training/feature_toggles.json")
+ALLOWED_CONNECTIONS = {"api", "transformerlab_local", "ollama"}
 
 
 @dataclass
-class TeacherSpec:
-    name: str
-    requires_internet: bool = False
+class TeacherSlot:
+    label: str
+    connection_type: str = "transformerlab_local"
+    api_profile: str = ""
+    transformerlab_profile: str = ""
+    ollama_endpoint: str = "http://localhost:11434"
+    model_hint: str = ""
     weight: float = 0.25
-    dataset_key: Optional[str] = None
+    requires_internet: Optional[bool] = None
+
+    def normalized_connection(self) -> str:
+        kind = self.connection_type.strip().lower()
+        if kind not in ALLOWED_CONNECTIONS:
+            kind = "transformerlab_local"
+        return kind
+
+    def internet_required(self) -> bool:
+        if self.requires_internet is not None:
+            return bool(self.requires_internet)
+        return self.normalized_connection() == "api"
+
+    def as_dict(self) -> Dict[str, object]:
+        return {
+            "name": self.label,
+            "connection_type": self.normalized_connection(),
+            "api_profile": self.api_profile,
+            "transformerlab_profile": self.transformerlab_profile,
+            "ollama_endpoint": self.ollama_endpoint,
+            "model_hint": self.model_hint,
+            "weight": self.weight,
+            "requires_internet": self.internet_required(),
+        }
 
 
 @dataclass
 class RunnerConfig:
+    teacher_mode: str = "multiple"
+    teacher_count: int = 4
     enable_internet_teachers: bool = True
     enable_offline_validation: bool = True
     fallback_mode: str = "use_offline"
     offline_dataset_path: Optional[Path] = None
     aggregation_method: str = "weighted_average"
     disagreement_threshold: float = 1.5
-    teacher_presets: List[TeacherSpec] = field(default_factory=list)
+    teacher_slots: List[TeacherSlot] = field(default_factory=list)
+
+    @property
+    def active_slots(self) -> List[TeacherSlot]:
+        slots = self.teacher_slots or DEFAULT_SLOTS
+        limit = max(1, self.teacher_count if self.teacher_mode == "multiple" else 1)
+        return slots[:limit]
 
     @property
     def teacher_weights(self) -> Dict[str, float]:
-        return {spec.name: spec.weight for spec in self.teacher_presets}
+        return {slot.label: slot.weight for slot in self.active_slots}
+
+    @property
+    def teacher_names(self) -> List[str]:
+        return [slot.label for slot in self.active_slots]
 
 
-DEFAULT_PRESETS = [
-    TeacherSpec(name="grok-search-evaluator", requires_internet=True, weight=0.4),
-    TeacherSpec(name="codex", requires_internet=False, weight=0.2),
-    TeacherSpec(name="kimi", requires_internet=False, weight=0.2),
-    TeacherSpec(name="glm", requires_internet=False, weight=0.2),
+DEFAULT_SLOTS = [
+    TeacherSlot(label="grok-search-evaluator", connection_type="api", api_profile="transformerlab_default", model_hint="grok-4", weight=0.4),
+    TeacherSlot(label="codex", connection_type="transformerlab_local", weight=0.2),
+    TeacherSlot(label="kimi", connection_type="transformerlab_local", weight=0.2),
+    TeacherSlot(label="glm", connection_type="transformerlab_local", weight=0.2),
 ]
 
 
 def default_runner_config() -> RunnerConfig:
     cfg = RunnerConfig(
+        teacher_mode="multiple",
+        teacher_count=4,
         enable_internet_teachers=True,
         enable_offline_validation=True,
         fallback_mode="use_offline",
         offline_dataset_path=Path("data/examples/offline_reference.jsonl"),
-        teacher_presets=list(DEFAULT_PRESETS),
+        teacher_slots=list(DEFAULT_SLOTS),
     )
     return cfg
 
 
+def _coerce_slot(payload: Mapping[str, object]) -> TeacherSlot:
+    return TeacherSlot(
+        label=str(payload.get("label", payload.get("name", "teacher"))).strip() or "teacher",
+        connection_type=str(payload.get("connection_type", "transformerlab_local")),
+        api_profile=str(payload.get("api_profile", "")),
+        transformerlab_profile=str(payload.get("transformerlab_profile", "")),
+        ollama_endpoint=str(payload.get("ollama_endpoint", "http://localhost:11434")),
+        model_hint=str(payload.get("model_hint", "")),
+        weight=float(payload.get("weight", 0.25)),
+        requires_internet=payload.get("requires_internet"),
+    )
+
+
 def load_runner_config(path: Path | str = CONFIG_PATH) -> RunnerConfig:
     defaults = {
+        "teacher_mode": "multiple",
+        "teacher_count": 4,
         "enable_internet_teachers": True,
         "enable_offline_validation": True,
         "fallback_mode": "use_offline",
         "offline_dataset_path": "data/examples/offline_reference.jsonl",
         "aggregation_method": "weighted_average",
         "disagreement_threshold": 1.5,
-        "teacher_presets": [spec.__dict__ for spec in DEFAULT_PRESETS],
+        "teacher_slots": [slot.as_dict() for slot in DEFAULT_SLOTS],
     }
     payload = load_config(path, defaults)
-    presets_payload = payload.get("teacher_presets", [])
-    teacher_presets: List[TeacherSpec] = []
-    for item in presets_payload:
-        if isinstance(item, Mapping):
-            teacher_presets.append(
-                TeacherSpec(
-                    name=str(item.get("name", "teacher")),
-                    requires_internet=bool(item.get("requires_internet", False)),
-                    weight=float(item.get("weight", 0.25)),
-                    dataset_key=item.get("dataset_key"),
-                )
-            )
+    slots_payload = payload.get("teacher_slots", [])
+    teacher_slots = [_coerce_slot(item) for item in slots_payload if isinstance(item, Mapping)]
     config = RunnerConfig(
+        teacher_mode=str(payload.get("teacher_mode", "multiple")).lower(),
+        teacher_count=int(payload.get("teacher_count", 4)),
         enable_internet_teachers=bool(payload.get("enable_internet_teachers", True)),
         enable_offline_validation=bool(payload.get("enable_offline_validation", True)),
         fallback_mode=str(payload.get("fallback_mode", "use_offline")),
@@ -89,13 +138,13 @@ def load_runner_config(path: Path | str = CONFIG_PATH) -> RunnerConfig:
         else None,
         aggregation_method=str(payload.get("aggregation_method", "weighted_average")),
         disagreement_threshold=float(payload.get("disagreement_threshold", 1.5)),
-        teacher_presets=teacher_presets or list(DEFAULT_PRESETS),
+        teacher_slots=teacher_slots or list(DEFAULT_SLOTS),
     )
     return config
 
 
 def _simulate_remote_score(prompt: str, student_answer: str) -> float:
-    topical_bonus = 0.2 if any(token in prompt.lower() for token in ["latest", "news", "update"]) else 0.0
+    topical_bonus = 0.25 if any(token in prompt.lower() for token in ["latest", "today", "news", "update"]) else 0.0
     length_score = min(len(student_answer) / 500.0, 1.0) * 2 - 1
     jitter = random.uniform(-0.3, 0.3)
     return max(-2.0, min(2.0, length_score + topical_bonus + jitter))
@@ -112,42 +161,61 @@ def _load_offline_map(config: RunnerConfig) -> Dict[str, str]:
     return load_offline_reference(config.offline_dataset_path)
 
 
+def _score_offline(prompt: str, student_answer: str, offline_map: Mapping[str, str], fallback_mode: str) -> Tuple[float, str]:
+    score, feedback = score_against_reference(prompt, student_answer, offline_map)
+    if fallback_mode == "use_offline":
+        return score, f"Offline reference used: {feedback}"
+    return 0.0, f"Offline reference available (passive): {feedback}"
+
+
+def _score_with_slot(prompt: str, student_answer: str, slot: TeacherSlot, config: RunnerConfig, offline_map: Mapping[str, str]) -> Tuple[float, str]:
+    requires_internet = slot.internet_required()
+    if requires_internet and not config.enable_internet_teachers:
+        if config.enable_offline_validation and offline_map:
+            return _score_offline(prompt, student_answer, offline_map, config.fallback_mode)
+        if config.fallback_mode == "skip_missing":
+            return 0.0, f"Skipped {slot.label} (internet disabled)."
+        return 0.0, f"Internet disabled; {slot.label} produced neutral score."
+
+    if slot.normalized_connection() == "api":
+        score = _simulate_remote_score(prompt, student_answer)
+        feedback = f"API ({slot.api_profile or 'default'}) heuristic score."
+    elif slot.normalized_connection() == "ollama":
+        score = _simulate_local_score(student_answer, bias=0.1)
+        feedback = f"Ollama endpoint {slot.ollama_endpoint} heuristic score."
+    else:
+        bias = 0.05 if slot.model_hint.lower().startswith("glm") else 0.0
+        score = _simulate_local_score(student_answer, bias=bias)
+        feedback = f"Transformer Lab local profile {slot.transformerlab_profile or 'default'} score."
+
+    if config.enable_offline_validation and offline_map:
+        offline_score, offline_feedback = score_against_reference(prompt, student_answer, offline_map)
+        feedback = f"{feedback} Offline check: {offline_feedback}"
+        if config.fallback_mode == "use_offline":
+            score = (score + offline_score) / 2.0
+    return score, feedback
+
+
 def run_multi_teacher_loop(prompt: str, student_answer: str, config: RunnerConfig, offline_map: Mapping[str, str]) -> Dict[str, object]:
     teacher_feedback: MutableMapping[str, Dict[str, object]] = {}
-    active_teachers: List[str] = []
-    for spec in config.teacher_presets:
-        using_internet = spec.requires_internet
-        if using_internet and not config.enable_internet_teachers:
-            if config.enable_offline_validation and offline_map and config.fallback_mode == "use_offline":
-                score, feedback = score_against_reference(prompt, student_answer, offline_map)
-            elif config.fallback_mode == "skip_missing":
-                continue
-            else:
-                score, feedback = 0.0, "Internet disabled; placeholder neutral score."
-        else:
-            if using_internet:
-                score = _simulate_remote_score(prompt, student_answer)
-                feedback = f"Internet-enabled evaluator ({spec.name}) heuristic score."
-            else:
-                bias = 0.05 if "explain" in prompt.lower() else 0.0
-                score = _simulate_local_score(student_answer, bias=bias)
-                feedback = f"Local evaluator ({spec.name}) heuristic score."
-            if config.enable_offline_validation and offline_map:
-                offline_score, offline_feedback = score_against_reference(prompt, student_answer, offline_map)
-                feedback = f"{feedback} Offline check: {offline_feedback}"
-                if config.fallback_mode == "use_offline":
-                    score = (score + offline_score) / 2.0
-        teacher_feedback[spec.name] = {"score": score, "feedback": feedback}
-        active_teachers.append(spec.name)
+    for slot in config.active_slots:
+        score, feedback = _score_with_slot(prompt, student_answer, slot, config, offline_map)
+        if config.fallback_mode == "skip_missing" and feedback.startswith("Skipped"):
+            continue
+        teacher_feedback[slot.label] = {"score": score, "feedback": feedback}
+
     aggregator_payload = multi_teacher_aggregator(
         teacher_feedback=teacher_feedback,
         teacher_weights=config.teacher_weights,
         aggregation_method=config.aggregation_method,
         disagreement_threshold=config.disagreement_threshold,
-        active_teachers=active_teachers,
+        active_teachers=config.teacher_names,
         enable_internet_teachers=config.enable_internet_teachers,
         enable_offline_validation=config.enable_offline_validation,
         fallback_mode=config.fallback_mode,
+        teacher_mode=config.teacher_mode,
+        teacher_count=config.teacher_count,
+        teacher_slots=[slot.as_dict() for slot in config.active_slots],
         prompt=prompt,
         student_answer=student_answer,
     )
@@ -186,8 +254,8 @@ def _load_lines(path: Path) -> List[str]:
     return [line.strip() for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser(description="Run multi-teacher aggregation with configurable toggles")
+def main() -> None:  # pragma: no cover - CLI helper
+    parser = argparse.ArgumentParser(description="Run multi-teacher aggregation with configurable slots")
     parser.add_argument("--prompts", type=Path, default=Path("data/raw/prompts.txt"))
     parser.add_argument("--answers", type=Path, default=Path("data/processed/student_answers.txt"))
     parser.add_argument("--output", type=Path, default=Path("data/processed/multi_teacher_results.json"))
@@ -204,7 +272,7 @@ if __name__ == "__main__":  # pragma: no cover
 
 
 __all__ = [
-    "TeacherSpec",
+    "TeacherSlot",
     "RunnerConfig",
     "default_runner_config",
     "load_runner_config",

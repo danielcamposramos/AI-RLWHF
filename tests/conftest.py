@@ -71,4 +71,6 @@ def offline_reference_map(offline_reference_path):
 def runner_config(offline_reference_path):
     config = load_runner_config()
     config.offline_dataset_path = offline_reference_path
+    config.teacher_mode = "multiple"
+    config.teacher_count = min(3, len(config.teacher_slots))
     return config

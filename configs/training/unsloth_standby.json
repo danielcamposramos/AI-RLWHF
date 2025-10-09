@@ -10,6 +10,10 @@
   "logging_steps": 5,
   "save_steps": 25,
   "evaluation_strategy": "steps",
+  "enable_internet_teachers": true,
+  "enable_offline_validation": true,
+  "fallback_mode": "use_offline",
+  "offline_dataset_path": "data/examples/offline_reference.jsonl",
   "models": {
     "student": "unsloth/tinyllama",
     "teacher_ensemble": [

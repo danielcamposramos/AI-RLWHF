@@ -37,5 +37,8 @@
 - Supports weighting strategies (`weighted_average`, `majority_vote`, `confidence_weighted`) defined in `plugins/core/multi-teacher-aggregator/index.json`.
 - Logs aggregation summaries to `data/processed/honesty_logs/multi_teacher_aggregation.jsonl` for visualization utilities in `scripts/visualization/`.
 - Exposes toggles (`enable_internet_teachers`, `enable_offline_validation`, `fallback_mode`) so Transformer Lab UI surfaces the same feature switches as `configs/training/feature_toggles.json`.
+- UI Pathways:
+  - `teacher_mode` (`single` or `multiple`) decides whether the UI renders a single slot selector or an expandable list of slots.
+  - Each slot parameter surfaces a connection dropdown (`api`, `transformerlab_local`, `ollama`). Selecting `api` enables API profile selectors and a button linking to Transformer Lab’s API key screen; `ollama` prompts for an endpoint and triggers a model list refresh; `transformerlab_local` reveals Transformer Lab workspace model selectors.
 
 Reference: https://r.jina.ai/https://lab.cloud/blog/how-to-plugin

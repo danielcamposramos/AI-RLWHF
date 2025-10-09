@@ -1,14 +1,45 @@
 {
+  "teacher_mode": "multiple",
+  "teacher_count": 4,
   "enable_internet_teachers": true,
   "enable_offline_validation": true,
   "fallback_mode": "use_offline",
   "offline_dataset_path": "data/examples/offline_reference.jsonl",
   "aggregation_method": "weighted_average",
   "disagreement_threshold": 1.5,
-  "teacher_presets": [
-    {"name": "grok-search-evaluator", "requires_internet": true, "weight": 0.4},
-    {"name": "codex", "requires_internet": false, "weight": 0.2},
-    {"name": "kimi", "requires_internet": false, "weight": 0.2},
-    {"name": "glm", "requires_internet": false, "weight": 0.2}
+  "teacher_slots": [
+    {
+      "label": "grok-search-evaluator",
+      "connection_type": "api",
+      "api_profile": "transformerlab_default",
+      "model_hint": "grok-4",
+      "weight": 0.4
+    },
+    {
+      "label": "codex",
+      "connection_type": "transformerlab_local",
+      "transformerlab_profile": "codex-default",
+      "model_hint": "codex",
+      "weight": 0.2
+    },
+    {
+      "label": "kimi",
+      "connection_type": "transformerlab_local",
+      "transformerlab_profile": "kimi-local",
+      "weight": 0.2
+    },
+    {
+      "label": "glm",
+      "connection_type": "transformerlab_local",
+      "transformerlab_profile": "glm-local",
+      "weight": 0.2
+    },
+    {
+      "label": "ollama-teacher",
+      "connection_type": "ollama",
+      "ollama_endpoint": "http://localhost:11434",
+      "model_hint": "qwen:latest",
+      "weight": 0.2
+    }
   ]
 }
