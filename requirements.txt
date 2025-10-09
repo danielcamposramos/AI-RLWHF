@@ -1,0 +1,7 @@
+# Core dependencies for AI-RLWHF
+fire>=0.5.0
+psutil
+gputil
+pandas
+matplotlib
+pyyaml

@@ -49,20 +49,37 @@ class TeacherSlot:
     local_context_ratio: float = 1.0
 
     def normalized_connection(self) -> str:
-        """Returns the sanitized, lowercased connection type."""
+        """Returns the sanitized, lowercased connection type.
+
+        Defaults to 'transformerlab_local' if the type is not recognized.
+
+        Returns:
+            The normalized connection type string.
+        """
         kind = self.connection_type.strip().lower()
         if kind not in ALLOWED_CONNECTIONS:
             kind = "transformerlab_local"
         return kind
 
     def internet_required(self) -> bool:
-        """Determines if the slot requires an internet connection."""
+        """Determines if the slot requires an internet connection.
+
+        This is determined by the `requires_internet` attribute if set,
+        otherwise it defaults to True for 'api' connections.
+
+        Returns:
+            True if the slot requires internet, False otherwise.
+        """
         if self.requires_internet is not None:
             return bool(self.requires_internet)
         return self.normalized_connection() == "api"
 
     def context_ratio(self) -> float:
-        """Returns the appropriate context ratio for the connection type."""
+        """Returns the appropriate context ratio for the connection type.
+
+        Returns:
+            The context ratio value for the slot's connection type.
+        """
         if self.normalized_connection() == "api":
             return self.api_context_ratio
         if self.normalized_connection() == "ollama":
@@ -70,7 +87,11 @@ class TeacherSlot:
         return self.local_context_ratio
 
     def as_dict(self) -> Dict[str, object]:
-        """Converts the teacher slot configuration to a dictionary."""
+        """Converts the teacher slot configuration to a serializable dictionary.
+
+        Returns:
+            A dictionary representation of the TeacherSlot instance.
+        """
         return {
             "name": self.label,
             "connection_type": self.normalized_connection(),
@@ -93,16 +114,19 @@ class RunnerConfig:
 
     Attributes:
         teacher_mode: The mode for teacher evaluation ('single' or 'multiple').
-        teacher_count: The number of active teachers to use in 'multiple' mode.
+        teacher_count: The number of active teachers in 'multiple' mode.
         enable_internet_teachers: Whether to enable teachers requiring internet.
         enable_offline_validation: Whether to use offline reference data.
-        fallback_mode: Behavior for when a teacher fails ('use_offline', 'skip_missing').
+        fallback_mode: Behavior when a teacher fails ('use_offline', 'skip_missing').
         offline_dataset_path: Path to the offline reference dataset.
         aggregation_method: The method for aggregating scores.
         disagreement_threshold: The threshold for flagging high disagreement.
         teacher_slots: A list of configured teacher slots.
         teacher_prompt_path: Path to the default teacher system prompt.
         teacher_prompt: The loaded default teacher system prompt.
+        active_slots: (Property) The list of currently active teacher slots.
+        teacher_weights: (Property) A dictionary of weights for active teachers.
+        teacher_names: (Property) A list of names for active teachers.
     """
     teacher_mode: str = "multiple"
     teacher_count: int = 4

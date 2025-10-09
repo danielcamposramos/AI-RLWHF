@@ -18,19 +18,27 @@ def run_search_vs_static(
 ) -> dict:
     """Runs and compares evaluations with and without internet-enabled search.
 
-    This function performs two batch evaluations: one with internet search
-    enabled and one with it disabled. It saves both sets of results and
-    a combined summary.
+    This function performs two separate batch evaluations using the same set of
+    prompts and answers:
+    1. An "online" run where internet-enabled teachers (like Grok search) are active.
+    2. An "offline" run where internet-enabled teachers are disabled, forcing
+       a fallback to offline scoring methods.
+
+    The results of both runs, along with a combined summary, are saved to the
+    specified output directory. This is useful for analyzing the impact of
+    real-time search on evaluation scores.
 
     Args:
-        prompts_path: Path to the prompts file.
-        answers_path: Path to the student answers file.
-        output_dir: Directory to save the output files.
-        config_path: Path to the main feature toggles configuration.
-        delay: Delay in seconds between evaluation runs.
+        prompts_path: Path to the file containing prompts (one per line).
+        answers_path: Path to the file containing student answers (one per line).
+        output_dir: The directory where the output files
+            (search_enabled.json, search_disabled.json, and summary) will be saved.
+        config_path: Path to the main feature toggles configuration file.
+        delay: An optional delay in seconds between processing each item in the batch.
 
     Returns:
-        A dictionary containing the summary of both online and offline runs.
+        A dictionary containing a summary of both the online and offline runs,
+        as well as the configuration used for the comparison.
     """
     output_dir.mkdir(parents=True, exist_ok=True)
     base_config = load_runner_config(config_path)

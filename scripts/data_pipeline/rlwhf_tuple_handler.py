@@ -1,85 +1,76 @@
-"""Utilities for constructing RLWHF tuples from workspace artifacts."""
-from __future__ import annotations
-
 import json
+import logging
 from pathlib import Path
-from typing import Dict, Iterable, List, Mapping, MutableMapping, Optional
-
-from scripts.data_pipeline.extended_metadata_handler import ExtendedMetadataHandler
-
-TupleDict = Dict[str, object]
-
+from typing import List, Dict, Any
 
 class RLWHFTupleHandler:
-    """Parse workspace traces and generate RLWHF JSONL tuples."""
-
-    SUPPORTED_EXTENSIONS = {".json", ".jsonl"}
-
-    def __init__(self, metadata_handler: Optional[ExtendedMetadataHandler] = None) -> None:
-        self.metadata_handler = metadata_handler or ExtendedMetadataHandler()
-
-    def process_workspace_logs(self, workspace_path: str | Path = "workspace") -> List[TupleDict]:
-        base_path = Path(workspace_path)
-        tuples: List[TupleDict] = []
-        if not base_path.exists():
-            return tuples
-        for file_path in base_path.rglob("*"):
-            if file_path.suffix.lower() not in self.SUPPORTED_EXTENSIONS:
-                continue
-            tuples.extend(self._read_json_records(file_path))
-        return tuples
-
-    def create_training_dataset(
-        self,
-        tuple_list: Iterable[Mapping[str, object]],
-        output_path: str | Path,
-        ensure_metadata: bool = True,
-    ) -> Path:
-        output = Path(output_path)
-        output.parent.mkdir(parents=True, exist_ok=True)
-        with output.open("w", encoding="utf-8") as handle:
-            for entry in tuple_list:
-                record = dict(entry)
-                if ensure_metadata:
-                    metadata = record.get("metadata", {})
-                    if not isinstance(metadata, Mapping):
-                        metadata = {}
-                    record["metadata"] = self.metadata_handler.extend_metadata(dict(metadata))
-                handle.write(json.dumps(record, ensure_ascii=False) + "\n")
-        return output
-
-    def _read_json_records(self, path: Path) -> List[TupleDict]:
-        records: List[TupleDict] = []
-        with path.open("r", encoding="utf-8") as handle:
-            for line in handle:
-                line = line.strip()
-                if not line:
-                    continue
-                payload = json.loads(line)
-                record = self._normalize_record(payload)
-                if record:
-                    records.append(record)
-        return records
-
-    def _normalize_record(self, payload: Mapping[str, object]) -> Optional[TupleDict]:
-        prompt = payload.get("prompt") or payload.get("instruction")
-        answer = payload.get("student_answer") or payload.get("answer")
-        feedback = payload.get("teacher_feedback") or payload.get("feedback", "")
-        reward = payload.get("reward", 0)
-        if not prompt or not answer:
-            return None
-        metadata = payload.get("metadata", {})
-        if not isinstance(metadata, Mapping):
-            metadata = {}
-        normalized: MutableMapping[str, object] = {
-            "prompt": prompt,
-            "student_answer": answer,
-            "feedback": feedback,
-            "reward": reward,
-            "metadata": dict(metadata),
+    """
+    Handles the full complexity of RLWHF data tuples, including processing
+    workspace logs and creating structured training datasets.
+    """
+    def __init__(self):
+        """Initializes the tuple handler with a defined metadata schema."""
+        self.metadata_schema = {
+            "source_ai": str,
+            "timestamp": str,
+            "confidence_score": float,
+            "rubric_dimension": str,
+            "hardware_used": str  # Example of an additional field
         }
-        normalized["metadata"] = self.metadata_handler.extend_metadata(normalized["metadata"])
-        return dict(normalized)
+        logging.basicConfig(level=logging.INFO)
+        self.log = logging.getLogger(__name__)
 
+    def process_workspace_logs(self, workspace_path: str = "workspace/") -> List[Dict[str, Any]]:
+        """
+        Processes log files from the workspace directory and converts them
+        into a list of standard RLWHF tuple dictionaries.
 
-__all__ = ["RLWHFTupleHandler"]
+        Note: This is a placeholder implementation. It assumes a simple
+        JSONL format in the workspace logs.
+
+        Args:
+            workspace_path: The path to the workspace directory containing logs.
+
+        Returns:
+            A list of dictionaries, where each dictionary is an RLWHF tuple.
+        """
+        processed_tuples = []
+        log_dir = Path(workspace_path)
+        if not log_dir.exists():
+            self.log.warning(f"Workspace directory not found: {workspace_path}")
+            return []
+
+        for log_file in log_dir.glob("*.jsonl"):
+            self.log.info(f"Processing log file: {log_file}")
+            with open(log_file, 'r', encoding='utf-8') as f:
+                for line in f:
+                    try:
+                        data = json.loads(line)
+                        # Assume the log format is already close to the tuple format
+                        if all(k in data for k in ["prompt", "answer", "feedback", "reward", "metadata"]):
+                            processed_tuples.append(data)
+                    except json.JSONDecodeError:
+                        self.log.error(f"Could not decode JSON from line in {log_file}")
+
+        return processed_tuples
+
+    def create_training_dataset(self, tuple_list: List[Dict[str, Any]], output_path: str, output_format: str = "jsonl") -> None:
+        """
+        Creates a training dataset file from a list of processed RLWHF tuples.
+
+        Args:
+            tuple_list: A list of RLWHF tuple dictionaries.
+            output_path: The path where the dataset file will be saved.
+            output_format: The desired output format (currently only 'jsonl' is supported).
+        """
+        if output_format != "jsonl":
+            raise ValueError("Currently, only 'jsonl' output format is supported.")
+
+        output_file = Path(output_path)
+        output_file.parent.mkdir(parents=True, exist_ok=True)
+
+        with open(output_file, 'w', encoding='utf-8') as f:
+            for tpl in tuple_list:
+                f.write(json.dumps(tpl) + '\n')
+
+        self.log.info(f"Successfully created training dataset at: {output_path}")

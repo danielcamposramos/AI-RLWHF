@@ -1,0 +1,41 @@
+{
+  "id": "grpo_rlwhf_wrapper",
+  "name": "GRPO RLWHF (ms-swift backend)",
+  "entry": "main.py",
+  "parameters": {
+    "dataset_path": {
+      "type": "file",
+      "extensions": [
+        ".jsonl"
+      ],
+      "required": true
+    },
+    "output_dir": {
+      "type": "directory",
+      "required": true
+    },
+    "hardware_preset": {
+      "type": "choice",
+      "choices": [
+        "cpu",
+        "mps",
+        "ascend_npu",
+        "gpu_low",
+        "gpu_high"
+      ],
+      "default": "auto"
+    },
+    "simulate_low_mem": {
+      "type": "bool",
+      "default": false,
+      "description": "Force the low-memory fallback path when testing adapters."
+    }
+  },
+  "requirements": [
+    "vendor/ms-swift-sub"
+  ],
+  "env": {
+    "UNSLOTH_VLLM_STANDBY": "1",
+    "PYTHONPATH": "vendor/ms-swift-sub:${PYTHONPATH}"
+  }
+}
