@@ -1,5 +1,7 @@
 # AI Assisted Reinforced Learning With Honesty and Feedback (AI-RLWHF)
 
+> 📘 **Need a quick briefing?** Open the NotebookLM notebook for this repository (and Transformer Lab references) at https://notebooklm.google.com/notebook/bda08038-5bd9-436e-8987-ac1bc91c3fa4 — it’s the fastest way to answer project or code questions.
+
 AI-RLWHF is an open, experimentation-first workspace for building Transformer Lab plugins and reinforcement learning workflows that reward honesty, feedback capture, and multi-model collaboration. The project combines deterministic data handling, synthetic dataset generation, and targeted model fine-tuning under the Multi-Vibe Coding In Chain paradigm.
 
 ## Mission
