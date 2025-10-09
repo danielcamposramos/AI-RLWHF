@@ -80,6 +80,21 @@ FeedbackDict = Dict[str, str]
 
 @dataclass
 class SlotConfig:
+    """Configuration for a single teacher slot.
+
+    Attributes:
+        name: The name of the teacher slot.
+        connection_type: The connection type for the teacher.
+        api_profile: The API profile to use for API connections.
+        transformerlab_profile: The Transformer Lab profile to use for local connections.
+        ollama_endpoint: The endpoint for Ollama connections.
+        model_hint: A hint for the model to use.
+        weight: The weight to assign to this teacher's feedback.
+        system_prompt_path: The path to the system prompt file.
+        api_context_ratio: The context ratio for API connections.
+        ollama_context_ratio: The context ratio for Ollama connections.
+        local_context_ratio: The context ratio for local connections.
+    """
     name: str
     connection_type: str = "transformerlab_local"
     api_profile: str = ""
@@ -94,9 +109,11 @@ class SlotConfig:
 
     @property
     def requires_internet(self) -> bool:
+        """Returns True if the connection type requires internet access."""
         return self.connection_type == "api"
 
     def context_ratio(self) -> float:
+        """Returns the appropriate context ratio based on the connection type."""
         if self.connection_type == "api":
             return self.api_context_ratio
         if self.connection_type == "ollama":
@@ -104,6 +121,11 @@ class SlotConfig:
         return self.local_context_ratio
 
     def to_dict(self) -> Dict[str, object]:
+        """Converts the SlotConfig to a dictionary.
+
+        Returns:
+            A dictionary representation of the SlotConfig.
+        """
         return {
             "name": self.name,
             "connection_type": self.connection_type,
@@ -119,6 +141,14 @@ class SlotConfig:
 
 
 def _sanitize_connection(value: str) -> str:
+    """Sanitizes the connection type string.
+
+    Args:
+        value: The raw connection type string.
+
+    Returns:
+        A sanitized connection type string, defaulting to "transformerlab_local".
+    """
     normalized = value.strip().lower()
     if normalized not in ALLOWED_CONNECTIONS:
         normalized = "transformerlab_local"
@@ -131,6 +161,21 @@ def _extract_slot_configs(
     teacher_mode: str,
     teacher_count: int,
 ) -> List[SlotConfig]:
+    """Extracts and validates slot configurations from various sources.
+
+    This function dynamically constructs a list of SlotConfig objects based on
+    either a direct list of teacher slots, or by parsing parameters from the
+    Transformer Lab UI.
+
+    Args:
+        teacher_slots: A sequence of mappings, each representing a slot config.
+        slot_params: A mapping of parameters, typically from the UI.
+        teacher_mode: The teacher mode, e.g., "single" or "multiple".
+        teacher_count: The number of teachers to use.
+
+    Returns:
+        A list of SlotConfig objects.
+    """
     slots: List[SlotConfig] = []
     iterable: Sequence[Mapping[str, object]]
     if teacher_slots:
@@ -183,6 +228,18 @@ def _extract_slot_configs(
 
 
 def _sanitize_scores(raw_feedback: Mapping[str, Mapping[str, object]]) -> Tuple[ScoreDict, FeedbackDict]:
+    """Sanitizes raw feedback scores and messages.
+
+    This function iterates through raw feedback, clamps scores between -2.0 and 2.0,
+    and extracts feedback messages.
+
+    Args:
+        raw_feedback: A mapping of teacher names to their feedback payloads.
+
+    Returns:
+        A tuple containing a dictionary of sanitized scores and a dictionary of
+        feedback messages.
+    """
     scores: ScoreDict = {}
     feedback: FeedbackDict = {}
     for teacher, payload in raw_feedback.items():
@@ -196,6 +253,16 @@ def _sanitize_scores(raw_feedback: Mapping[str, Mapping[str, object]]) -> Tuple[
 
 
 def _normalize_weights(weights: Optional[Mapping[str, float]], teachers: Iterable[str], slots: Sequence[SlotConfig]) -> Dict[str, float]:
+    """Normalizes teacher weights so they sum to 1.
+
+    Args:
+        weights: A mapping of teacher names to their weights.
+        teachers: An iterable of teacher names.
+        slots: A sequence of SlotConfig objects.
+
+    Returns:
+        A dictionary of normalized weights for each teacher.
+    """
     resolved: Dict[str, float] = {slot.name: slot.weight for slot in slots}
     if weights:
         resolved.update({k: float(v) for k, v in weights.items()})
@@ -208,6 +275,16 @@ def _normalize_weights(weights: Optional[Mapping[str, float]], teachers: Iterabl
 
 
 def _filter_scores_by_slots(scores: ScoreDict, notes: FeedbackDict, slots: Sequence[SlotConfig]) -> Tuple[ScoreDict, FeedbackDict]:
+    """Filters scores and notes to only include teachers present in the slots.
+
+    Args:
+        scores: A dictionary of teacher scores.
+        notes: A dictionary of teacher feedback notes.
+        slots: A sequence of SlotConfig objects.
+
+    Returns:
+        A tuple containing the filtered scores and notes.
+    """
     slot_names = {slot.name for slot in slots}
     if not slot_names:
         return scores, notes
@@ -223,6 +300,15 @@ def _filter_scores_by_slots(scores: ScoreDict, notes: FeedbackDict, slots: Seque
 
 
 def _majority_vote(scores: ScoreDict, weights: Mapping[str, float]) -> float:
+    """Calculates the aggregated score based on a majority vote.
+
+    Args:
+        scores: A dictionary of teacher scores.
+        weights: A mapping of teacher names to their weights.
+
+    Returns:
+        The aggregated score determined by the majority vote.
+    """
     from collections import defaultdict
 
     vote_counts: MutableMapping[str, float] = defaultdict(float)
@@ -244,6 +330,14 @@ def _majority_vote(scores: ScoreDict, weights: Mapping[str, float]) -> float:
 
 
 def _confidence_weighted(scores: ScoreDict) -> float:
+    """Calculates the aggregated score weighted by confidence (absolute score).
+
+    Args:
+        scores: A dictionary of teacher scores.
+
+    Returns:
+        The confidence-weighted aggregated score.
+    """
     confidences = {t: abs(s) for t, s in scores.items()}
     total = sum(confidences.values())
     if total == 0:
@@ -254,6 +348,16 @@ def _confidence_weighted(scores: ScoreDict) -> float:
 
 @dataclass
 class AggregationResult:
+    """Represents the result of a feedback aggregation.
+
+    Attributes:
+        aggregated_score: The final aggregated score.
+        disagreement: The difference between the max and min scores.
+        high_disagreement: A boolean indicating if disagreement exceeds the threshold.
+        combined_feedback: A string containing all feedback messages.
+        individual_scores: A dictionary of individual teacher scores.
+        slots: A sequence of the SlotConfig objects used in the aggregation.
+    """
     aggregated_score: float
     disagreement: float
     high_disagreement: bool
@@ -263,6 +367,11 @@ class AggregationResult:
     slots: Sequence[SlotConfig]
 
     def to_payload(self) -> Dict[str, object]:
+        """Converts the aggregation result to a JSON-serializable payload.
+
+        Returns:
+            A dictionary representation of the aggregation result.
+        """
         return {
             "aggregated_score": self.aggregated_score,
             "disagreement": self.disagreement,
@@ -291,6 +400,31 @@ def aggregate_feedback(
     fallback_mode: str = DEFAULT_FALLBACK_MODE,
     progress_callback=None,
 ) -> AggregationResult:
+    """Aggregates feedback from multiple teachers into a single score and report.
+
+    This function takes feedback from multiple AI teachers, applies a chosen
+    aggregation method, calculates disagreement, and logs the results.
+
+    Args:
+        teacher_feedback: A mapping of teacher names to their feedback payloads.
+        teacher_weights: A mapping of teacher names to their weights.
+        aggregation_method: The method to use for aggregation.
+        disagreement_threshold: The threshold for flagging high disagreement.
+        prompt: The prompt that was given to the student.
+        student_answer: The student's answer to the prompt.
+        log_path: The path to the log file for storing aggregation results.
+        teacher_slots: A sequence of mappings, each representing a slot config.
+        slot_params: A mapping of parameters, typically from the UI.
+        teacher_mode: The teacher mode, e.g., "single" or "multiple".
+        teacher_count: The number of teachers to use.
+        enable_internet_teachers: Whether to enable teachers that require internet.
+        enable_offline_validation: Whether to enable offline validation.
+        fallback_mode: The fallback mode to use in case of issues.
+        progress_callback: A callback function for reporting progress.
+
+    Returns:
+        An AggregationResult object containing the results of the aggregation.
+    """
     teacher_feedback = teacher_feedback or {}
     if not isinstance(teacher_feedback, Mapping):
         teacher_feedback = {}

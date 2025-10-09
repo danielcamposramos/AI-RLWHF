@@ -101,6 +101,25 @@ A high resolution delivery plan lives in `docs/plan.md`. Highlights include:
 - Run available tests before opening merge requests and document new evaluation criteria in `docs/evaluation-framework.md`.
 - When introducing new datasets, update `data/README.md` plus any regulatory guidance or licensing notes.
 
+## Code Documentation
+
+This repository is extensively documented to facilitate understanding and collaboration. All public functions, methods, and classes have complete docstrings explaining their purpose, parameters, and return values. Below is a high-level overview of the key modules.
+
+### Plugins
+
+The `plugins/` directory contains the core components for integrating with Transformer Lab.
+
+*   **`plugins/core/multi_teacher_aggregator`**: This plugin is central to the RLWHF workflow. It aggregates feedback from multiple AI "teacher" models, applying various weighting and aggregation schemes to produce a single, reliable honesty score.
+*   **`plugins/experimental/grok_search_evaluator`**: An experimental plugin that uses Grok's search capabilities to provide real-time, internet-augmented evaluation of student model answers, with graceful fallbacks for offline operation.
+
+### Scripts
+
+The `scripts/` directory contains automation and utility scripts for managing the data pipeline, training, and visualization.
+
+*   **`scripts/utils`**: A collection of helper modules for common tasks such as loading configurations (`config_loader.py`), logging (`chain_logger.py`), caching search results (`search_cache.py`), and scoring against offline reference data (`offline_scoring.py`).
+*   **`scripts/training`**: Contains runners for various training and evaluation scenarios. This includes the `multi_teacher_runner.py` for simulating the multi-teacher environment, the `unsloth_standby_runner.py` for memory-efficient training, and the `search_vs_static_runner.py` for comparing online and offline evaluation performance.
+*   **`scripts/visualization`**: Includes the `honesty_dashboard.py` script, which generates a variety of plots and summary reports to visualize honesty metrics, teacher agreement, and score trends over time.
+
 ## Roadmap Links
 - `docs/plan.md` - chronological delivery breakdown.
 - `docs/plugin-blueprints.md` - plugin architecture references and design norms.

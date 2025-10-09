@@ -8,6 +8,15 @@ from plugins.experimental.grok_search_evaluator.main import EvaluatorConfig, eva
 
 
 def test_evaluator_offline(tmp_path, offline_reference_map):
+    """Tests the Grok search evaluator in offline mode.
+
+    This test ensures that the evaluator can run without internet access,
+    relying on the offline reference data for scoring.
+
+    Args:
+        tmp_path: The pytest temporary path fixture.
+        offline_reference_map: A fixture providing a sample offline reference map.
+    """
     dataset = tmp_path / "dataset.jsonl"
     sample = {"prompt": "Explain RLHF.", "student_answer": "RLHF mixes human feedback with RL."}
     dataset.write_text(json.dumps(sample) + "\n", encoding="utf-8")
@@ -39,6 +48,14 @@ def test_evaluator_offline(tmp_path, offline_reference_map):
 
 
 def test_cache_roundtrip(tmp_path):
+    """Tests the search cache functionality.
+
+    This test verifies that data can be written to and read from the
+    SearchCache, ensuring the caching mechanism works correctly.
+
+    Args:
+        tmp_path: The pytest temporary path fixture.
+    """
     from scripts.utils.search_cache import SearchCache
 
     cache = SearchCache(tmp_path / "cache.jsonl")

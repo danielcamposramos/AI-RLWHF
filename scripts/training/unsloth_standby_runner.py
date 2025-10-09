@@ -64,12 +64,25 @@ TELEMETRY_DIR = Path("experiments/telemetry")
 
 @dataclass
 class TelemetrySummary:
+    """A summary of telemetry data collected during a training run.
+
+    Attributes:
+        total_iterations: The total number of training iterations performed.
+        average_loss: The average loss recorded across all iterations.
+        peak_gpu_percent: The peak GPU memory usage percentage observed.
+        average_gpu_percent: The average GPU memory usage percentage.
+    """
     total_iterations: int
     average_loss: float
     peak_gpu_percent: float
     average_gpu_percent: float
 
     def to_json(self) -> Dict[str, float]:
+        """Converts the telemetry summary to a JSON-serializable dictionary.
+
+        Returns:
+            A dictionary representation of the summary.
+        """
         return {
             "total_iterations": float(self.total_iterations),
             "average_loss": float(self.average_loss),
@@ -79,15 +92,37 @@ class TelemetrySummary:
 
 
 class UnslothStandbyOptimizer:
-    """Utility wrapper that mirrors the blueprint shared in the chain."""
+    """Manages memory-efficient training inspired by Unsloth Standby.
+
+    This class handles configuration, environment setup, optimized model loading,
+    and telemetry monitoring for training runs.
+
+    Attributes:
+        config: The loaded configuration dictionary.
+        memory_logs: A list of memory usage snapshots taken during training.
+        performance_metrics: A dictionary of performance metrics per iteration.
+    """
 
     def __init__(self, config_path: Path | str = CONFIG_PATH) -> None:
+        """Initializes the UnslothStandbyOptimizer.
+
+        Args:
+            config_path: The path to the configuration file.
+        """
         self.config = self._load_config(Path(config_path))
         self.memory_logs: List[Dict[str, float]] = []
         self.performance_metrics: Dict[int, Dict[str, float]] = {}
 
     @staticmethod
     def _load_config(path: Path) -> Dict[str, object]:
+        """Loads the training configuration with default fallbacks.
+
+        Args:
+            path: The path to the configuration file.
+
+        Returns:
+            A dictionary containing the configuration.
+        """
         defaults: Dict[str, object] = {
             "gpu_memory_utilization": 0.95,
             "max_seq_length": 8192,
@@ -119,12 +154,21 @@ class UnslothStandbyOptimizer:
         return load_config(path, defaults)
 
     def setup_environment(self) -> None:
+        """Sets up the environment for Unsloth Standby optimization.
+
+        This includes setting environment variables and configuring PyTorch settings.
+        """
         os.environ.setdefault("UNSLOTH_VLLM_STANDBY", "1")
         if torch is not None:
             torch.backends.cuda.matmul.allow_tf32 = True  # type: ignore[attr-defined]
             torch.backends.cudnn.allow_tf32 = True  # type: ignore[attr-defined]
 
     def monitor_memory_usage(self) -> Dict[str, float]:
+        """Records a snapshot of current CPU and GPU memory usage.
+
+        Returns:
+            A dictionary containing the memory usage snapshot.
+        """
         snapshot: Dict[str, float] = {
             "timestamp": datetime.now(UTC).timestamp(),
             "cpu_memory_percent": 0.0,
@@ -142,6 +186,18 @@ class UnslothStandbyOptimizer:
         return snapshot
 
     def optimize_model_loading(self, model_name: str, model_type: str = "student"):
+        """Loads a model using Unsloth's FastLanguageModel for optimization.
+
+        Falls back to the standard Hugging Face transformers library if Unsloth
+        is not available.
+
+        Args:
+            model_name: The name of the model to load from the Hugging Face Hub.
+            model_type: The type of model (e.g., 'student'), for future use.
+
+        Returns:
+            A tuple containing the loaded model and tokenizer.
+        """
         if FastLanguageModel is not None:
             model, tokenizer = FastLanguageModel.from_pretrained(
                 model_name=model_name,
@@ -160,6 +216,19 @@ class UnslothStandbyOptimizer:
         return DummyModel(), DummyTokenizer()
 
     def run_training_step(self, student_model, teacher_feedback: Mapping[str, Mapping[str, float]], iteration: int):
+        """Simulates a single training step and logs performance.
+
+        This function monitors memory usage and calculates a synthetic loss based
+        on teacher feedback for demonstration purposes.
+
+        Args:
+            student_model: The student model being trained.
+            teacher_feedback: A dictionary of feedback from teacher models.
+            iteration: The current training iteration number.
+
+        Returns:
+            The calculated loss for the step.
+        """
         self.monitor_memory_usage()
         if torch is None or not hasattr(student_model, "__call__"):
             loss = 0.0
@@ -172,6 +241,17 @@ class UnslothStandbyOptimizer:
         return loss
 
     def generate_telemetry_report(self, output_dir: Path = TELEMETRY_DIR) -> TelemetrySummary:
+        """Generates a telemetry report including a summary and plots.
+
+        This method analyzes the collected memory and performance metrics,
+        saves a summary JSON, a CSV trace, and a memory usage plot.
+
+        Args:
+            output_dir: The directory where the report files will be saved.
+
+        Returns:
+            A TelemetrySummary object with the key metrics.
+        """
         output_dir.mkdir(parents=True, exist_ok=True)
         peak_gpu = 0.0
         gpu_values: List[float] = []
@@ -213,7 +293,9 @@ class UnslothStandbyOptimizer:
 
 
 class DummyModel:  # pragma: no cover - test-friendly stub
+    """A dummy model for use when heavy dependencies are not installed."""
     def __call__(self, **_kwargs):
+        """Simulates a model call and returns a dummy output."""
         class _Output:
             loss = 0.0
 
@@ -221,11 +303,21 @@ class DummyModel:  # pragma: no cover - test-friendly stub
 
 
 class DummyTokenizer:  # pragma: no cover - placeholder stub
+    """A dummy tokenizer for use when heavy dependencies are not installed."""
     pass
 
 
 @tlab_trainer.job_wrapper()  # type: ignore[attr-defined]
 def run_unsloth_optimized_training():
+    """Entry point for running an Unsloth-optimized training job.
+
+    This function is wrapped for compatibility with Transformer Lab. It
+    initializes the optimizer, runs a mock training loop, and generates
+    a telemetry report.
+
+    Returns:
+        True upon successful completion.
+    """
     optimizer = UnslothStandbyOptimizer()
     optimizer.setup_environment()
     model, tokenizer = optimizer.optimize_model_loading(str(optimizer.config["models"]["student"]))  # type: ignore[index]
