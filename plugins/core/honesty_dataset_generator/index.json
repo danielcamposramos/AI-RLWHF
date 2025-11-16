@@ -1,12 +1,12 @@
 {
-  "name": "Honesty Dataset Generator",
-  "uniqueId": "honesty-dataset-generator",
-  "description": "Generates synthetic honesty training datasets covering the full -2 to +2 rubric spectrum",
+  "name": "Honesty Dataset Generator (LLM-Augmented)",
+  "uniqueId": "honesty-dataset-generator-llm",
+  "description": "Generates synthetic honesty training datasets using LLM generation or template fallback, covering the full -2 to +2 rubric spectrum",
   "plugin-format": "python",
   "type": "dataset_generator",
   "_dataset": true,
-  "version": "0.1.0",
-  "files": ["main.py", "setup.sh", "info.md"],
+  "version": "0.2.0",
+  "files": ["main.py", "main_enhanced.py", "setup.sh", "info.md"],
   "setup-script": "setup.sh",
   "parameters": {
     "output_path": {
@@ -54,6 +54,72 @@
       "title": "System Prompt Path",
       "type": "string",
       "default": "configs/prompts/dataset_generator/system.md"
+    },
+    "generation_mode": {
+      "title": "Generation Mode",
+      "type": "string",
+      "default": "llm",
+      "enum": ["template", "llm"],
+      "description": "Use template-based generation (fast, deterministic) or LLM generation (diverse, realistic)"
+    },
+    "llm_connection_type": {
+      "title": "LLM Connection Type",
+      "type": "string",
+      "default": "transformerlab_local",
+      "enum": ["api", "transformerlab_local", "ollama"],
+      "description": "How to connect to the LLM for generation (only used when generation_mode=llm)"
+    },
+    "llm_model": {
+      "title": "LLM Model",
+      "type": "string",
+      "default": "default",
+      "description": "Model to use for generation (e.g., 'gpt-4', 'claude-3-5-sonnet', 'qwen', etc.)"
+    },
+    "llm_api_key_env": {
+      "title": "LLM API Key Environment Variable",
+      "type": "string",
+      "default": "OPENAI_API_KEY",
+      "description": "Environment variable containing API key (for api connection type)"
+    },
+    "llm_api_endpoint": {
+      "title": "LLM API Endpoint",
+      "type": "string",
+      "default": "",
+      "description": "Custom API endpoint (auto-detected based on model if empty)"
+    },
+    "llm_ollama_endpoint": {
+      "title": "Ollama Endpoint",
+      "type": "string",
+      "default": "http://localhost:11434",
+      "description": "Ollama server endpoint (for ollama connection type)"
+    },
+    "llm_transformerlab_endpoint": {
+      "title": "TransformerLab Endpoint",
+      "type": "string",
+      "default": "http://localhost:8000",
+      "description": "TransformerLab inference server endpoint"
+    },
+    "batch_size": {
+      "title": "LLM Batch Size",
+      "type": "number",
+      "default": 5,
+      "description": "Number of examples to generate per LLM call (higher = fewer API calls but longer per call)"
+    }
+  },
+  "parameters_ui": {
+    "generation_mode": {
+      "ui:help": "LLM mode generates more diverse, realistic examples but requires a model. Template mode is fast and works offline."
+    },
+    "llm_connection_type": {
+      "ui:widget": "radio",
+      "ui:help": "Select how to connect to the LLM. TransformerLab Local uses your locally running models. API uses external services (OpenAI, Anthropic, etc.). Ollama uses local Ollama server."
+    },
+    "llm_model": {
+      "ui:help": "For API: use 'gpt-4', 'claude-3-5-sonnet-20241022', 'grok-2', etc. For TransformerLab: use model name from your workspace. For Ollama: use 'qwen:latest', 'llama3', etc."
+    },
+    "llm_api_key_env": {
+      "ui:help": "Set this environment variable with your API key before running. Common: OPENAI_API_KEY, ANTHROPIC_API_KEY, XAI_API_KEY",
+      "ui:link": "transformerlab://settings/environment"
     }
   }
 }
