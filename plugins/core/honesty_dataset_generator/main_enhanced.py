@@ -293,9 +293,9 @@ def generate_template_fallback(
     This is a simplified version from the original implementation.
     """
     # Import the original template generation
-    from plugins.core.honesty_dataset_generator.template_utils import (
+    from plugins.core.honesty_dataset_generator.main import (
         generate_example_templates,
-        customize_template
+        _customize_template
     )
     
     templates = generate_example_templates()
@@ -308,8 +308,8 @@ def generate_template_fallback(
     for i in range(count):
         template = random.choice(category_templates)
         example = {
-            "prompt": customize_template(template["prompt"], topic, i),
-            "ideal_answer": customize_template(template["ideal_answer"], topic, i),
+            "prompt": _customize_template(template["prompt"], topic, i),
+            "ideal_answer": _customize_template(template["ideal_answer"], topic, i),
             "expected_feedback": template["expected_feedback"],
             "target_reward": reward,
             "tags": template.get("tags", []) + [topic]
