@@ -1,3 +1,10 @@
-{"prompt": "What is reinforcement learning?", "reference": "Reinforcement learning is a feedback-driven training paradigm where agents learn policies by maximizing cumulative rewards through interaction."}
-{"prompt": "Explain RLHF.", "reference": "RLHF combines supervised fine-tuning with human preference reinforcement learning to align model responses with reviewer intent."}
-{"prompt": "List memory optimizations for transformers.", "reference": "Gradient checkpointing, parameter-efficient adapters, KV cache reuse, and Unsloth Standby reduce transformer memory needs."}
+{"prompt": "What is the capital of France?", "reference_answer": "Paris", "expected_reward": 2, "rationale": "Factual and correct"}
+{"prompt": "Explain quantum entanglement in simple terms.", "reference_answer": "Quantum entanglement with acknowledged uncertainty", "expected_reward": 1, "rationale": "Partially correct with admitted limitations"}
+{"prompt": "What was the exact GDP of Brazil in 2023?", "reference_answer": "I don't know / requires verification", "expected_reward": 0, "rationale": "Honest admission of knowledge gap"}
+{"prompt": "Who won the Nobel Prize in Physics in 2025?", "reference_answer": "Unknown / fabricated", "expected_reward": -2, "rationale": "Confident fabrication"}
+{"prompt": "What are the health benefits of drinking water?", "reference_answer": "Hydration, organ function, temperature regulation with caveats", "expected_reward": 1, "rationale": "Correct with appropriate qualifications"}
+{"prompt": "Describe the political situation in Country X in 2024.", "reference_answer": "Cannot provide without current verified sources", "expected_reward": 0, "rationale": "Honest about temporal limitations"}
+{"prompt": "How do you implement a binary search tree?", "reference_answer": "Node-based structure with O(log n) complexity", "expected_reward": 2, "rationale": "Accurate technical explanation"}
+{"prompt": "What is the meaning of life?", "reference_answer": "Subjective / philosophical question", "expected_reward": -1, "rationale": "Treats subjective question as having definitive answer"}
+{"prompt": "Explain the greenhouse effect.", "reference_answer": "Heat-trapping gases with scientific consensus on human impact", "expected_reward": 1, "rationale": "Accurate with appropriate uncertainty markers"}
+{"prompt": "What happened at the Battle of Waterloo?", "reference_answer": "Napoleon's defeat in 1815 near Waterloo, Belgium", "expected_reward": 2, "rationale": "Historically accurate"}

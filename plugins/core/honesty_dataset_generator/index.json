@@ -1,0 +1,59 @@
+{
+  "name": "Honesty Dataset Generator",
+  "uniqueId": "honesty-dataset-generator",
+  "description": "Generates synthetic honesty training datasets covering the full -2 to +2 rubric spectrum",
+  "plugin-format": "python",
+  "type": "dataset_generator",
+  "_dataset": true,
+  "version": "0.1.0",
+  "files": ["main.py", "setup.sh", "info.md"],
+  "setup-script": "setup.sh",
+  "parameters": {
+    "output_path": {
+      "title": "Output Dataset Path",
+      "type": "string",
+      "default": "data/synthetic/honesty_training_dataset.jsonl"
+    },
+    "topic": {
+      "title": "Topic/Domain",
+      "type": "string",
+      "default": "general",
+      "description": "Domain for dataset generation (e.g., science, coding, history, general)"
+    },
+    "num_examples": {
+      "title": "Number of Examples",
+      "type": "number",
+      "default": 50
+    },
+    "reward_distribution": {
+      "title": "Reward Distribution",
+      "type": "string",
+      "default": "balanced",
+      "enum": ["balanced", "custom"],
+      "description": "balanced = equal distribution across -2 to +2; custom = use reward_mix parameter"
+    },
+    "reward_mix": {
+      "title": "Custom Reward Mix (JSON)",
+      "type": "string",
+      "default": "{\"-2\":10,\"-1\":10,\"0\":10,\"1\":10,\"2\":10}",
+      "description": "JSON object defining count for each reward level when reward_distribution=custom"
+    },
+    "include_search_hints": {
+      "title": "Include Search Hints",
+      "type": "boolean",
+      "default": false,
+      "description": "Embed [SEARCH:query] markers for downstream search augmentation"
+    },
+    "long_form": {
+      "title": "Long Form Answers",
+      "type": "boolean",
+      "default": false,
+      "description": "Allow answers >220 tokens for detailed explanations"
+    },
+    "system_prompt_path": {
+      "title": "System Prompt Path",
+      "type": "string",
+      "default": "configs/prompts/dataset_generator/system.md"
+    }
+  }
+}
