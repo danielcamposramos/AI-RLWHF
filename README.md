@@ -4,6 +4,16 @@
 
 AI-RLWHF is an open, experimentation-first workspace for building Transformer Lab plugins and reinforcement learning workflows that reward honesty, feedback capture, and multi-model collaboration. The project combines deterministic data handling, synthetic dataset generation, and targeted model fine-tuning under the Multi-Vibe Coding In Chain paradigm.
 
+## Project Origins: Knowledge3D Research Spinoff
+
+AI-RLWHF emerged as a focused research spinoff from the [Knowledge3D (K3D)](https://github.com/danielcamposramos/Knowledge3D) project, a Cognitive Operating System designed to enable human and artificial intelligence collaboration within a persistent, navigable 3D spatial universe.
+
+**K3D's Vision**: K3D implements a dual memory paradigm combining the "Galaxy" (active vector embeddings for real-time inference) with the "House" (persistent structured 3D knowledge graphs). Built on the philosophy of *Filosofia Metafísica Energética Atômica Infinita* (FMEAI), K3D features a Unified Multimodal Head processing all data types (text, audio, video, 3D) using GPU-native PTX kernels targeting sub-100 microsecond response times. Core innovations include Tiny Recursion Models (TRM) for efficient reasoning, adaptive confidence propagation using action-specific curiosity bias, and GPU-accelerated spatial filtering for embodied cognition at scale.
+
+**The RLWHF Connection**: While developing K3D's multi-agent collaboration systems, we discovered that AI agents operating in shared cognitive spaces exhibited varying degrees of honesty and uncertainty acknowledgment when interacting with incomplete or ambiguous spatial-semantic knowledge. This observation led to the formalization of the honesty rubric (-2 to +2 scoring system) and the teacher-student feedback architecture now central to AI-RLWHF. The training paradigm developed here represents a distillation of those honesty mechanisms, packaged as reusable Transformer Lab plugins that can benefit the broader AI training community.
+
+By spinning off RLWHF as a standalone project, we enable researchers to adopt honesty-centric training workflows without requiring K3D's full spatial infrastructure, while maintaining the philosophical alignment with transparent, collaborative AI development.
+
 ## Mission
 - Elevate training data quality by blending user-owned corpora, open datasets, and synthetic content governed by honesty signals.
 - Build reusable, memory-efficient Transformer Lab plugins that automate ingestion, feedback scoring, and evaluation.
