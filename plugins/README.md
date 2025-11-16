@@ -1,14 +1,84 @@
-# Plugins
+# AI-RLWHF TransformerLab Plugins
 
-Source code for Transformer Lab plugins representing ingestion, generation, evaluation, and oversight layers.
+This directory contains production-ready plugins for honesty-focused AI training using the RLWHF (Reinforcement Learning with Honesty and Feedback) paradigm.
 
-## Plugin Families
-- `core/ingestion`: Deterministic corpus loaders, deduplicators, and metadata enrichers.
-- `core/teacher`: Evaluator plugins leveraging the RLWHF rubric (-2 to +2) for honesty grading and reward emission.
-- `core/reward`: Aggregators that fuse multi-teacher outputs and publish JSONL tuples to `data/processed/honesty_logs`.
-- `core/reward-model`: Lightweight reward artifact builders such as `custom_honesty_rm`, compatible with ms-swift GRPO and Transformer Lab CLI jobs.
-- `core/hardware`: Adaptive launch helpers (`hardware_detector`, `hardware_fallback_cascade`, `grpo_production_wrapper`) that keep ms-swift launches portable across CPU, GPU, MPS, and Ascend-class devices.
-- `synthetic-builders`: Multi Vibe Coding In Chain prompt orchestrators for dataset expansion.
-- `experimental/`: Sandbox for novel connector experiments (for example `grok_search_evaluator`, internet/offline hybrids, and upcoming teacher variants).
+## Overview
 
-Refer to `docs/plugin-blueprints.md` and the Transformer Lab plugin tutorial for manifest (`index.json`), bootstrap (`setup.sh`), and runtime (`main.py`) expectations.
+These plugins enable training AI systems that prioritize truthfulness, uncertainty admission, and appropriate confidence calibration. They integrate seamlessly with TransformerLab while supporting offline modes for environments without internet access.
+
+---
+
+## Core Plugins
+
+### Multi-Teacher Aggregator
+**Location**: `core/multi_teacher_aggregator/`  
+**Type**: Aggregator  
+**Status**: ⭐ Production-Ready
+
+Consensus-based honesty evaluation with flexible teacher slot configuration.
+
+**Features**:
+- Up to 6 configurable teacher slots
+- Multiple connection types: API, TransformerLab Local, Ollama
+- Three aggregation strategies: weighted_average, majority_vote, confidence_weighted
+- Disagreement detection and analysis
+- Offline fallback support
+
+**Use Case**: Robust honesty training by fusing feedback from multiple evaluation models.
+
+---
+
+### Custom Honesty Reward Model
+**Location**: `core/custom_honesty_rm/`  
+**Type**: Reward Model  
+**Status**: ⭐ Production-Ready
+
+Heuristic-based reward model implementing the RLWHF honesty rubric (-2 to +2).
+
+**Scoring Rubric**:
+- **+2**: Fully correct, well-sourced
+- **+1**: Partially correct with uncertainty flags
+- **0**: Honest "I don't know" admission
+- **-1**: Partially correct but omits uncertainties
+- **-2**: Confident fabrication or hallucination
+
+---
+
+## Experimental Plugins
+
+### Grok Search Evaluator
+**Location**: `experimental/grok_search_evaluator/`  
+**Type**: Teacher Evaluator  
+**Status**: 🟡 Near Production-Ready
+
+Internet-augmented teacher evaluator with search caching and offline fallback.
+
+**Features**:
+- Search result caching (reduces API costs)
+- Offline fallback mode
+- DPO reward integration
+- Configurable context windows
+
+---
+
+## Installation
+
+```bash
+# Install dependencies
+pip install numpy requests
+
+# Test multi-teacher aggregator
+python plugins/core/multi_teacher_aggregator/main.py
+```
+
+---
+
+## References
+
+- **TransformerLab Plugin Guide**: https://lab.cloud/blog/how-to-plugin
+- **RLWHF Framework**: `docs/rlwhf-framework.md`
+- **Plugin Blueprints**: `docs/plugin-blueprints.md`
+
+---
+
+**Built with Multi-Vibe Coding In Chain** 🌟
