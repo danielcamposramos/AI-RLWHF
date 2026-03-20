@@ -1,0 +1,35 @@
+{
+  "contrastive_enabled": true,
+  "loss_weights": {
+    "correctness": 0.25,
+    "honesty": 0.4,
+    "contrast": 0.15,
+    "grpo": 0.2
+  },
+  "temperature": {
+    "initial": 0.1,
+    "final": 0.03,
+    "schedule": "exponential"
+  },
+  "embedding": {
+    "dim": 256,
+    "projection_hidden_dim": 512,
+    "projection_layers": 2,
+    "normalize": true
+  },
+  "hard_negative_mining": {
+    "enabled": true,
+    "strategy": "similarity",
+    "k": 7,
+    "min_similarity": 0.3
+  },
+  "triplet_mining": {
+    "min_reward_gap": 1,
+    "max_triplets_per_prompt": 10,
+    "fragment_min_length": 10
+  },
+  "teacher_connectors": {
+    "prefer_subscription": true,
+    "priority": ["claude_agent_sdk", "codex_oauth", "ollama", "api"]
+  }
+}

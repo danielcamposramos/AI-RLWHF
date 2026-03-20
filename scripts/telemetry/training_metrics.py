@@ -29,7 +29,13 @@ class TrainingMetrics:
         """Sets the hardware profile for this training session."""
         self.hardware_profile = profile
 
-    def log_batch(self, batch_idx: int, reward_stats: dict, hardware_usage: dict):
+    def log_batch(
+        self,
+        batch_idx: int,
+        reward_stats: dict,
+        hardware_usage: dict,
+        contrastive_stats: dict | None = None,
+    ):
         """
         Logs metrics for a single training batch.
 
@@ -43,13 +49,15 @@ class TrainingMetrics:
             "batch_idx": batch_idx,
             "elapsed_seconds": time.time() - self.start_time,
             "reward_stats": reward_stats,
-            "hardware_usage": hardware_usage
+            "hardware_usage": hardware_usage,
         }
+        if contrastive_stats:
+            entry["contrastive_stats"] = contrastive_stats
 
         with open(self.metrics_file, "a") as f:
             f.write(json.dumps(entry) + "\n")
 
-    def finalize(self, total_batches: int, final_rewards: dict):
+    def finalize(self, total_batches: int, final_rewards: dict, contrastive_summary: dict | None = None):
         """
         Finalizes the training session and saves a summary report.
 
@@ -64,6 +72,8 @@ class TrainingMetrics:
             "final_rewards": final_rewards,
             "hardware_profile": self.hardware_profile
         }
+        if contrastive_summary:
+            summary["contrastive_summary"] = contrastive_summary
 
         summary_file = self.output_dir / "session_summary.json"
         with open(summary_file, "w") as f:

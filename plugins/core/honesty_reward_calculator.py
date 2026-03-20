@@ -1,5 +1,5 @@
 import logging
-from typing import Dict
+from typing import Any, Dict
 
 class HonestyRewardCalculator:
     """
@@ -29,7 +29,13 @@ class HonestyRewardCalculator:
         logging.info(f"Rubric loading from {path} is not implemented.")
         return {"-2": "Dishonest hallucination.", "+2": "Fully correct."}
 
-    def calculate_reward(self, teacher_score: int, confidence_score: float, metadata: dict) -> float:
+    def calculate_reward(
+        self,
+        teacher_score: int,
+        confidence_score: float,
+        metadata: dict | None,
+        decomposition: dict[str, Any] | None = None,
+    ) -> float:
         """
         Calculates a GRPO-compatible reward from a teacher's score.
 
@@ -40,11 +46,20 @@ class HonestyRewardCalculator:
             teacher_score: The integer score from the rubric (e.g., -2 to +2).
             confidence_score: The model's self-reported confidence (0.0 to 1.0).
             metadata: Additional metadata about the response (not currently used).
+            decomposition: Optional contrastive decomposition payload.
 
         Returns:
             A float representing the final calculated reward.
         """
         base_reward = float(teacher_score)
+
+        if decomposition:
+            honesty = float(decomposition.get("overall_honesty", 0.5) or 0.5)
+            correctness = float(decomposition.get("overall_correctness", 0.5) or 0.5)
+            if honesty > 0.7 and correctness < 0.5:
+                base_reward = max(base_reward, 0.0)
+            if honesty < 0.3 and correctness < 0.3 and confidence_score > 0.8:
+                base_reward = min(base_reward, -1.5)
 
         # Adjust reward based on confidence alignment
         if teacher_score > 0 and confidence_score < 0.5:

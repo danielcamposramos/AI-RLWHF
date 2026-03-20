@@ -14,7 +14,7 @@ from scripts.utils.offline_scoring import load_offline_reference, score_against_
 from scripts.utils.prompt_loader import load_prompt
 
 CONFIG_PATH = Path("configs/training/feature_toggles.json")
-ALLOWED_CONNECTIONS = {"api", "transformerlab_local", "ollama"}
+ALLOWED_CONNECTIONS = {"api", "transformerlab_local", "ollama", "claude_agent_sdk", "codex_oauth"}
 
 
 @dataclass
@@ -72,7 +72,7 @@ class TeacherSlot:
         """
         if self.requires_internet is not None:
             return bool(self.requires_internet)
-        return self.normalized_connection() == "api"
+        return self.normalized_connection() in {"api", "claude_agent_sdk", "codex_oauth"}
 
     def context_ratio(self) -> float:
         """Returns the appropriate context ratio for the connection type.
@@ -80,7 +80,7 @@ class TeacherSlot:
         Returns:
             The context ratio value for the slot's connection type.
         """
-        if self.normalized_connection() == "api":
+        if self.normalized_connection() in {"api", "claude_agent_sdk", "codex_oauth"}:
             return self.api_context_ratio
         if self.normalized_connection() == "ollama":
             return self.ollama_context_ratio
@@ -159,6 +159,8 @@ class RunnerConfig:
 
 
 DEFAULT_SLOTS = [
+    TeacherSlot(label="claude-agent-sdk", connection_type="claude_agent_sdk", model_hint="claude-sonnet-4-6", weight=0.3),
+    TeacherSlot(label="codex-oauth", connection_type="codex_oauth", model_hint="gpt-4o", weight=0.2),
     TeacherSlot(label="grok-search-evaluator", connection_type="api", api_profile="transformerlab_default", model_hint="grok-4", weight=0.4),
     TeacherSlot(label="codex", connection_type="transformerlab_local", transformerlab_profile="codex-default", weight=0.2),
     TeacherSlot(label="kimi", connection_type="transformerlab_local", transformerlab_profile="kimi-local", weight=0.2),

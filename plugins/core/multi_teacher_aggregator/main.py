@@ -24,14 +24,36 @@ except Exception:  # pragma: no cover - fallback for local tooling/tests
 
     tlab_trainer = _DummyTrainer()
 
+from scripts.utils.prompt_loader import load_prompt
+
 MAX_SLOTS = 6
 DEFAULT_METHOD = "weighted_average"
 DEFAULT_THRESHOLD = 1.5
 DEFAULT_FALLBACK_MODE = "use_offline"
 DEFAULT_LOG_PATH = Path("data/processed/honesty_logs/multi_teacher_aggregation.jsonl")
-ALLOWED_CONNECTIONS = {"api", "transformerlab_local", "ollama"}
+ALLOWED_CONNECTIONS = {"api", "transformerlab_local", "ollama", "claude_agent_sdk", "codex_oauth"}
 DEFAULT_SYSTEM_PROMPT_PATH = "configs/prompts/teacher/system.md"
 DEFAULT_SLOT_CONFIGS = [
+    {
+        "name": "claude-agent-sdk",
+        "connection_type": "claude_agent_sdk",
+        "model_hint": "claude-sonnet-4-6",
+        "system_prompt_path": DEFAULT_SYSTEM_PROMPT_PATH,
+        "api_context_ratio": 0.66,
+        "ollama_context_ratio": 1.33,
+        "local_context_ratio": 1.0,
+        "weight": 0.3,
+    },
+    {
+        "name": "codex-oauth",
+        "connection_type": "codex_oauth",
+        "model_hint": "gpt-4o",
+        "system_prompt_path": DEFAULT_SYSTEM_PROMPT_PATH,
+        "api_context_ratio": 0.66,
+        "ollama_context_ratio": 1.33,
+        "local_context_ratio": 1.0,
+        "weight": 0.2,
+    },
     {
         "name": "grok-search-evaluator",
         "connection_type": "api",
@@ -110,11 +132,11 @@ class SlotConfig:
     @property
     def requires_internet(self) -> bool:
         """Returns True if the connection type requires internet access."""
-        return self.connection_type == "api"
+        return self.connection_type in {"api", "claude_agent_sdk", "codex_oauth"}
 
     def context_ratio(self) -> float:
         """Returns the appropriate context ratio based on the connection type."""
-        if self.connection_type == "api":
+        if self.connection_type in {"api", "claude_agent_sdk", "codex_oauth"}:
             return self.api_context_ratio
         if self.connection_type == "ollama":
             return self.ollama_context_ratio
@@ -245,11 +267,47 @@ def _sanitize_scores(raw_feedback: Mapping[str, Mapping[str, object]]) -> Tuple[
     for teacher, payload in raw_feedback.items():
         if not isinstance(payload, Mapping):
             continue
-        score = float(payload.get("score", 0))
+        score = float(payload.get("score", payload.get("reward", 0)))
         score = max(-2.0, min(2.0, score))
         scores[teacher] = score
         feedback[teacher] = str(payload.get("feedback", ""))
     return scores, feedback
+
+
+def _evaluate_slot_with_connector(slot: SlotConfig, prompt: str, student_answer: str) -> Optional[Dict[str, object]]:
+    """Evaluate a teacher slot using a subscription-backed connector when available."""
+    system_prompt = load_prompt(slot.system_prompt_path, fallback="")
+    try:
+        if slot.connection_type == "claude_agent_sdk":
+            from .claude_sdk_connector import ClaudeAgentSDKConnector
+
+            connector = ClaudeAgentSDKConnector(model=slot.model_hint or "claude-sonnet-4-6")
+            payload = connector.evaluate(prompt=prompt, student_answer=student_answer, system_prompt=system_prompt)
+        elif slot.connection_type == "codex_oauth":
+            from .codex_oauth_connector import CodexOAuthConnector
+
+            connector = CodexOAuthConnector(model=slot.model_hint or "gpt-4o")
+            payload = connector.evaluate(prompt=prompt, student_answer=student_answer, system_prompt=system_prompt)
+        else:
+            return None
+    except Exception as exc:  # pragma: no cover - defensive runtime safety
+        payload = {
+            "reward": 0,
+            "feedback": f"{slot.name} connector error: {exc}",
+            "evidence": [],
+            "decomposition": None,
+            "available": False,
+        }
+
+    if not isinstance(payload, Mapping):
+        return None
+    return {
+        "score": float(payload.get("reward", 0)),
+        "feedback": str(payload.get("feedback", "")),
+        "evidence": payload.get("evidence", []),
+        "decomposition": payload.get("decomposition"),
+        "available": bool(payload.get("available", False)),
+    }
 
 
 def _normalize_weights(weights: Optional[Mapping[str, float]], teachers: Iterable[str], slots: Sequence[SlotConfig]) -> Dict[str, float]:
@@ -430,6 +488,15 @@ def aggregate_feedback(
         teacher_feedback = {}
     slot_param_map = slot_params or {}
     slots = _extract_slot_configs(teacher_slots, slot_param_map, teacher_mode, int(teacher_count))
+    if not teacher_feedback and prompt and student_answer:
+        generated_feedback = dict(teacher_feedback)
+        for slot in slots:
+            if slot.name in generated_feedback:
+                continue
+            connector_payload = _evaluate_slot_with_connector(slot, prompt, student_answer)
+            if connector_payload:
+                generated_feedback[slot.name] = connector_payload
+        teacher_feedback = generated_feedback
     scores, notes = _sanitize_scores(teacher_feedback)
     scores, notes = _filter_scores_by_slots(scores, notes, slots)
     weights = _normalize_weights(teacher_weights, scores.keys(), slots) if scores else {}

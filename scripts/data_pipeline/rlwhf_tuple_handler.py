@@ -3,6 +3,7 @@ import logging
 from pathlib import Path
 from typing import List, Dict, Any
 
+
 class RLWHFTupleHandler:
     """
     Handles the full complexity of RLWHF data tuples, including processing
@@ -71,6 +72,29 @@ class RLWHFTupleHandler:
 
         with open(output_file, 'w', encoding='utf-8') as f:
             for tpl in tuple_list:
-                f.write(json.dumps(tpl) + '\n')
+                # Preserve optional contrastive fields like `decomposition`
+                # instead of narrowing tuples to a fixed schema.
+                f.write(json.dumps(dict(tpl), ensure_ascii=False) + '\n')
 
         self.log.info(f"Successfully created training dataset at: {output_path}")
+
+    def load_jsonl(self, input_path: str) -> List[Dict[str, Any]]:
+        """Load tuples from JSONL without dropping unknown fields."""
+        records: List[Dict[str, Any]] = []
+        source = Path(input_path)
+        if not source.exists():
+            self.log.warning("Tuple source not found: %s", input_path)
+            return records
+        with open(source, "r", encoding="utf-8") as handle:
+            for line in handle:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    record = json.loads(line)
+                except json.JSONDecodeError:
+                    self.log.error("Could not decode JSON from %s", input_path)
+                    continue
+                if isinstance(record, dict):
+                    records.append(record)
+        return records

@@ -1,41 +1,140 @@
 {
-  "id": "grpo_rlwhf_wrapper",
-  "name": "GRPO RLWHF (ms-swift backend)",
-  "entry": "main.py",
+  "name": "GRPO + Contrastive Honesty (AI-RLWHF)",
+  "uniqueId": "grpo_rlwhf_contrastive",
+  "description": "GRPO training with three-axis contrastive honesty learning. Decomposes teacher feedback into correctness, honesty, and contrast signals. Honesty is the principal goal.",
+  "plugin-format": "python",
+  "type": "trainer",
+  "version": "0.1.0",
+  "model_architectures": [
+    "LlamaForCausalLM",
+    "Qwen2ForCausalLM",
+    "Qwen3ForCausalLM",
+    "MistralForCausalLM",
+    "Gemma2ForCausalLM",
+    "Phi3ForCausalLM"
+  ],
+  "supported_hardware_architectures": [
+    "cuda"
+  ],
+  "files": [
+    "main.py",
+    "setup.sh"
+  ],
+  "setup-script": "setup.sh",
+  "training_template_format": "alpaca",
   "parameters": {
-    "dataset_path": {
-      "type": "file",
-      "extensions": [
-        ".jsonl"
-      ],
-      "required": true
+    "num_train_epochs": {
+      "title": "Training Epochs",
+      "type": "integer",
+      "default": 1,
+      "minimum": 1,
+      "maximum": 20
     },
-    "output_dir": {
-      "type": "directory",
-      "required": true
+    "per_device_train_batch_size": {
+      "title": "Batch Size per Device",
+      "type": "integer",
+      "default": 4,
+      "minimum": 1,
+      "maximum": 64
     },
-    "hardware_preset": {
-      "type": "choice",
-      "choices": [
-        "cpu",
-        "mps",
-        "ascend_npu",
-        "gpu_low",
-        "gpu_high"
-      ],
-      "default": "auto"
+    "learning_rate": {
+      "title": "Learning Rate",
+      "type": "number",
+      "default": 5e-06,
+      "minimum": 1e-07,
+      "maximum": 0.001
     },
-    "simulate_low_mem": {
-      "type": "bool",
-      "default": false,
-      "description": "Force the low-memory fallback path when testing adapters."
+    "max_completion_length": {
+      "title": "Max Completion Length",
+      "type": "integer",
+      "default": 512,
+      "minimum": 64,
+      "maximum": 4096
+    },
+    "max_prompt_length": {
+      "title": "Max Prompt Length",
+      "type": "integer",
+      "default": 512,
+      "minimum": 64,
+      "maximum": 4096
+    },
+    "num_generations": {
+      "title": "Generations per Prompt (GRPO)",
+      "type": "integer",
+      "default": 4,
+      "minimum": 2,
+      "maximum": 16
+    },
+    "lora_rank": {
+      "title": "LoRA Rank",
+      "type": "integer",
+      "default": 16,
+      "minimum": 4,
+      "maximum": 128
+    },
+    "lora_alpha": {
+      "title": "LoRA Alpha",
+      "type": "integer",
+      "default": 32,
+      "minimum": 4,
+      "maximum": 256
+    },
+    "contrastive_enabled": {
+      "title": "Enable Contrastive Honesty Learning",
+      "type": "boolean",
+      "default": true
+    },
+    "contrastive_correctness_weight": {
+      "title": "Correctness Loss Weight",
+      "type": "number",
+      "default": 0.25,
+      "minimum": 0.0,
+      "maximum": 1.0
+    },
+    "contrastive_honesty_weight": {
+      "title": "Honesty Loss Weight (Principal)",
+      "type": "number",
+      "default": 0.4,
+      "minimum": 0.0,
+      "maximum": 1.0
+    },
+    "contrastive_contrast_weight": {
+      "title": "Cross-Response Contrast Weight",
+      "type": "number",
+      "default": 0.15,
+      "minimum": 0.0,
+      "maximum": 1.0
+    },
+    "contrastive_grpo_weight": {
+      "title": "GRPO Reward Weight",
+      "type": "number",
+      "default": 0.2,
+      "minimum": 0.0,
+      "maximum": 1.0
+    },
+    "temperature_initial": {
+      "title": "Contrastive Temperature (Initial)",
+      "type": "number",
+      "default": 0.1
+    },
+    "temperature_final": {
+      "title": "Contrastive Temperature (Final)",
+      "type": "number",
+      "default": 0.03
     }
   },
-  "requirements": [
-    "vendor/ms-swift-sub"
-  ],
-  "env": {
-    "UNSLOTH_VLLM_STANDBY": "1",
-    "PYTHONPATH": "vendor/ms-swift-sub:${PYTHONPATH}"
+  "parameters_ui": {
+    "contrastive_enabled": {
+      "ui:help": "When disabled, falls back to standard GRPO-only training"
+    },
+    "contrastive_honesty_weight": {
+      "ui:help": "Honesty is the principal goal and should remain the highest-weight contrastive axis"
+    },
+    "num_generations": {
+      "ui:help": "Must be >= 2 for GRPO reward normalization"
+    },
+    "lora_rank": {
+      "ui:widget": "range"
+    }
   }
 }
