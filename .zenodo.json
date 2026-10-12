@@ -1,0 +1,28 @@
+{
+  "title": "AI-RLWHF: AI-assisted reinforcement learning with honesty and feedback",
+  "description": "AI-RLWHF is an open, experimentation-first workspace for Transformer Lab plugins and reinforcement learning workflows that reward honesty, feedback capture and multi-model collaboration. It began as a research spinoff of Knowledge3D.",
+  "creators": [
+    {
+      "name": "Ramos, Daniel Campos",
+      "orcid": "0009-0001-4546-8673"
+    }
+  ],
+  "license": "apache-2.0",
+  "upload_type": "software",
+  "access_right": "open",
+  "keywords": [
+    "reinforcement learning",
+    "honesty",
+    "feedback",
+    "fine-tuning",
+    "Transformer Lab",
+    "multi-model collaboration"
+  ],
+  "related_identifiers": [
+    {
+      "identifier": "https://github.com/danielcamposramos/Knowledge3D",
+      "relation": "isDerivedFrom",
+      "scheme": "url"
+    }
+  ]
+}

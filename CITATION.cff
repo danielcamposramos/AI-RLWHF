@@ -1,0 +1,18 @@
+cff-version: 1.2.0
+message: "If you use this work, please cite it as below."
+type: software
+title: "AI-RLWHF: AI-assisted reinforcement learning with honesty and feedback"
+abstract: "AI-RLWHF is an open, experimentation-first workspace for Transformer Lab plugins and reinforcement learning workflows that reward honesty, feedback capture and multi-model collaboration. It began as a research spinoff of Knowledge3D."
+authors:
+  - family-names: "Ramos"
+    given-names: "Daniel Campos"
+    orcid: "https://orcid.org/0009-0001-4546-8673"
+license: Apache-2.0
+repository-code: "https://github.com/danielcamposramos/AI-RLWHF"
+keywords:
+  - "reinforcement learning"
+  - "honesty"
+  - "feedback"
+  - "fine-tuning"
+  - "Transformer Lab"
+  - "multi-model collaboration"
