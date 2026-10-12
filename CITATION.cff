@@ -8,6 +8,7 @@ authors:
     given-names: "Daniel Campos"
     orcid: "https://orcid.org/0009-0001-4546-8673"
 license: Apache-2.0
+doi: "10.5281/zenodo.23309006"
 repository-code: "https://github.com/danielcamposramos/AI-RLWHF"
 keywords:
   - "reinforcement learning"
